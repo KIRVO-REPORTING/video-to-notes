@@ -169,7 +169,7 @@ Then send Codex a video URL or ask:
 Use youtube-local-transcribe to process this video and create a summary report: VIDEO_URL
 ```
 
-Codex replies should lead with the real video title, the Notion row/report link, and a compact summary. Video summaries use foldable segmented conclusions: each collapsed title starts with a timestamp range and the segment conclusion, while the expanded body uses natural prose or concise bullets instead of fixed `Point` / `Evidence` / `Implication` labels. Codex should rename the thread to the video topic when thread tools are available instead of leaving a generic transcription title. Conversion and download details stay out of the final answer unless they affect the result.
+Codex replies should lead with the real video title, the Notion row/report link, and a compact summary. Video summaries use foldable segmented conclusions: each collapsed title starts with a timestamp range and the segment conclusion, while the expanded body uses natural prose or concise bullets instead of fixed `Point` / `Evidence` / `Implication` labels. For long videos, Codex may split the transcript into contiguous ranges and draft those ranges in parallel before merging them into one coherent report. Codex should rename the thread to the video topic when thread tools are available instead of leaving a generic transcription title. Conversion and download details stay out of the final answer unless they affect the result.
 
 ## Local Development
 

@@ -102,6 +102,8 @@ Notes
 
 For video reports, each `<summary>` line must start with a bracketed timestamp or time range such as `[01:24-02:44]`, using the transcript's actual timing. Use `[hh:mm:ss-hh:mm:ss]` for videos longer than one hour. The report renderer and CLI Notion publisher convert bracketed timestamps into clickable source-video links that seek to the start time, so keep the timestamp at the beginning of each folded segment summary. When writing report content through the Notion connector Markdown path, avoid colons in the linked label because Notion can split the link; use an inline link like `[01m24s-02m44s](https://www.youtube.com/watch?v=VIDEO_ID&t=84)` instead of leaving it as plain text.
 
+For long videos, consider parallel drafting after reading the full transcript once. Treat a video as long when it is roughly over 45 minutes, has a very large transcript, or naturally breaks into many segments. Split the transcript into contiguous timestamp ranges and, when subagents or parallel work are available, draft each range independently into candidate `<details>` blocks. Each parallel draft must receive only the metadata, its transcript slice, neighboring boundary context when needed, and the output structure above. The main agent must then merge the drafts into one coherent `summary.md`, remove repetition, normalize segment titles, verify timestamp ranges against the transcript, and keep the final response focused on the report rather than the coordination process.
+
 Finalize:
 
 ```bash
