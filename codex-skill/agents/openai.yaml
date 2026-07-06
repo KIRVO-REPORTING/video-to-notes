@@ -1,6 +1,6 @@
 interface:
   display_name: "Video Report Builder"
   short_description: "Build concise segmented video reports"
-  default_prompt: "Use $youtube-local-transcribe for this video link: derive the real video title, rename the thread to the video topic when possible, prefer captions then local Whisper, write a segmented summary with conclusions, points, and evidence, finalize and publish the clean Notion row report, then answer with the title, summary, links, and caveats without verbose processing logs."
+  default_prompt: "Use $youtube-local-transcribe for this video link: derive the real video title, rename the thread to the video topic when possible, prefer captions then local Whisper, write a natural segmented summary with timestamped conclusions, finalize and publish the clean Notion row report, then answer with the title, summary, links, and caveats without verbose processing logs."
 policy:
   allow_implicit_invocation: true

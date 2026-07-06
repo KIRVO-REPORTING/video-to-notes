@@ -1,24 +1,24 @@
 ---
 name: youtube-local-transcribe
-description: Caption-first local video archiving, transcription, summarization, report generation, clean Notion database publishing, dashboard workflow, concise final answers, and video-topic thread titles for YouTube, youtu.be, Bilibili, b23.tv, BV, av, ep, ss, and other yt-dlp supported video URLs. Use when the user sends a bare video link or asks to download subtitles, transcribe locally, summarize a video, create notes, generate an HTML report, publish to Notion, create a Notion report database, sync local reports, open a local browser report, inspect past video reports, or serve a local report dashboard.
+description: Caption-first local video archiving, transcription, summarization, report generation, default clean Notion database publishing, dashboard workflow, concise final answers, and video-topic thread titles for YouTube, youtu.be, Bilibili, b23.tv, BV, av, ep, ss, and other yt-dlp supported video URLs. Use when the user sends a bare video link or asks to download subtitles, transcribe locally, summarize a video, create notes, generate an HTML report, publish to Notion, create a Notion report database, sync local reports, open a local browser report, inspect past video reports, or serve a local report dashboard.
 ---
 
 # YouTube Local Transcribe
 
-Use this workflow for bare video URLs and explicit video transcription, summary, archive, Notion sync, or report requests. Prefer downloadable subtitles first; use local Whisper only when captions are missing, unsuitable, or the user forces transcription.
+Use this workflow for bare video URLs and explicit video transcription, summary, archive, Notion sync, or report requests. Prefer downloadable subtitles first; use local Whisper only when captions are missing, unsuitable, or the user forces transcription. Publish or update the clean Notion report by default after local finalization unless the user explicitly asks for local-only output or Notion is unavailable.
 
 ## Current Artifact Workflow
 
-When the user asks for a report, Notion sync, or the current clean report output, produce the current artifact directly:
+For bare video links, report requests, Notion sync requests, or the current clean report output, produce the current artifact directly:
 
 1. Process the video with `ytlt process`, preferring captions and falling back to local Whisper only when needed.
-2. Read `metadata.json` and `transcript.txt`; write `summary.md` with timestamped segment conclusions, points, and evidence.
+2. Read `metadata.json` and `transcript.txt`; write `summary.md` with an answer-first overview and timestamped segment summaries grounded in the transcript.
 3. Run `ytlt finalize "<video-folder>"` to refresh the local `report.html` and dashboard index.
-4. Publish or update the Notion database row report. The Notion row opened from `Name` is the report content page.
+4. Publish or update the Notion database row report by default. The Notion row opened from `Name` is the report content page.
 5. Rename the current Codex thread to a concise video-topic title when a thread-title tool is available and the current thread id can be resolved.
 6. Return the Notion report row URL as the primary output, plus the database URL and local `report.html` path.
 
-Do not stop at only a local HTML report or dashboard when the user asked for Notion, sync, or the current artifact. Local files remain the backing archive; Notion is the reader-facing deliverable.
+Do not stop at only a local HTML report or dashboard for bare links or report requests unless the user explicitly asks for local-only output or Notion publishing is blocked. Local files remain the backing archive; Notion is the reader-facing deliverable.
 
 Keep user-facing progress and final responses focused on the video result. Avoid dumping download, transcode, caption conversion, test, command, codec, cleanup, or file-by-file process logs unless the user asks for that detail or the workflow fails.
 
@@ -71,6 +71,8 @@ The JSON output includes the folder and report paths. Read `metadata.json` and `
 
 Write a grounded Markdown summary to `<video-folder>/summary.md`. Use the user's language unless the user requests another language. Prefer a segmented, answer-first structure over a flat list of bullets.
 
+Do not force every segment into `Point` / `Evidence` / `Implication` labels. Each segment should start with a timestamped conclusion and then use whichever compact format reads naturally: a short paragraph, 2-4 concise bullets, or a brief takeaway plus supporting detail. Include transcript-backed specifics, examples, claims, or caveats where they materially help, but avoid mechanical labels unless the user explicitly asks for them.
+
 Use this structure:
 
 ```text
@@ -81,13 +83,11 @@ One-paragraph answer-first summary naming the video's core conclusion.
 Segment Conclusions
 
 [mm:ss-mm:ss] Segment conclusion
-- Point: Concrete point from this segment.
-- Evidence: Transcript-backed reason, example, claim, or data.
-- Implication: Why this segment matters, when useful.
+Short paragraph or 2-4 concise bullets explaining the takeaway, the key supporting detail, and why it matters when useful.
 
 [mm:ss-mm:ss] Segment conclusion
-- Point: Concrete point from this segment.
-- Evidence: Transcript-backed reason, example, claim, or data.
+- Concise takeaway from this segment.
+- Concrete transcript-backed detail, example, claim, or caveat.
 
 Notes
 
@@ -102,11 +102,11 @@ Finalize:
 ytlt finalize "<video-folder>"
 ```
 
-Finalization re-renders `report.html`, deletes any retained downloaded `video.*` media file, and refreshes the dashboard index. If the user asked for Notion or the current artifact, continue into Notion publishing before responding.
+Finalization re-renders `report.html`, deletes any retained downloaded `video.*` media file, and refreshes the dashboard index. Continue into Notion publishing before responding unless the user explicitly asked for local-only output or Notion is unavailable.
 
 ## Notion Publishing
 
-Use Notion publishing only when the user asks for Notion output or the environment is already configured for it.
+Use Notion publishing by default for bare video links and report requests. Skip it only when the user explicitly asks for local-only output, the environment has neither CLI Notion credentials nor a connected Notion app, or publishing fails after a reasonable retry. If skipped or blocked, state the reason in the final response and still return the local report path.
 
 For CLI-based publishing, the required environment is:
 
@@ -124,28 +124,22 @@ export NOTION_DATABASE_ID="..."
 
 Prefer `NOTION_DATA_SOURCE_ID` for a Notion database/data-source dashboard. Use `NOTION_PARENT_PAGE_ID` only when the user wants plain child pages under a normal Notion page. `NOTION_DATABASE_ID` resolves the database's first data source automatically.
 
-Publish during processing or finalization:
+When CLI credentials and a target are available, publish during finalization or publish the already processed folder:
 
 ```bash
-ytlt process "VIDEO_URL" --publish-notion
 ytlt finalize "<video-folder>" --publish-notion
-```
-
-Publish an already processed folder:
-
-```bash
 ytlt publish-notion "<video-folder>"
 ```
 
 When Notion publishing succeeds, the JSON output includes `notion.notion_url`. Include that link in the final response alongside the local dashboard link. The publisher stores `notion_page_id`, `notion_url`, and `notion_synced_at` in `metadata.json`; later publishes update the same Notion page.
 
-When running in Codex with a connected Notion app but no `NOTION_TOKEN`, use the Notion connector after `ytlt finalize`. Use the clean Notion database layout below. Do not claim the CLI wrote to Notion unless `--publish-notion` was used.
+When running in Codex with a connected Notion app but no `NOTION_TOKEN`, use the Notion connector after `ytlt finalize`. Use the clean Notion database layout below. Do not claim the CLI wrote to Notion unless `--publish-notion` or `ytlt publish-notion` was used.
 
 In final responses, lead with the video title and Notion row URL. Include the local report path only as the backing archive.
 
 ### Clean Notion Database Layout
 
-When the user asks to sync reports to Notion, create or reuse one parent page as the workspace landing page. Keep this page clean:
+When syncing reports to Notion, create or reuse one parent page as the workspace landing page. Keep this page clean:
 
 - Add a short `报告数据库` section with the report database.
 - Add a concise sync status section.
@@ -183,9 +177,7 @@ One answer-first summary paragraph.
 
 ## 分段结论
 [01m24s-02m44s](SOURCE_URL_WITH_t=84) Segment conclusion.
-- Point: Concrete point from this segment.
-- Evidence: Transcript-backed reason, example, claim, or data.
-- Implication: Why this segment matters, when useful.
+Short paragraph or 2-4 concise bullets explaining the segment's takeaway with concrete transcript-backed details. Do not force `Point` / `Evidence` / `Implication` labels unless the user asks for that format.
 
 ## 备注
 - Caveats about subtitles, transcription, uncertain terms, or source claims.
@@ -228,12 +220,8 @@ Notion 报告：NOTION_ROW_URL
 摘要：One concise answer-first paragraph.
 
 分段结论
-- [mm:ss-mm:ss] Segment conclusion
-  Point: ...
-  Evidence: ...
-- [mm:ss-mm:ss] Segment conclusion
-  Point: ...
-  Evidence: ...
+- [mm:ss-mm:ss] Segment conclusion: concise natural-language takeaway.
+- [mm:ss-mm:ss] Segment conclusion: concise natural-language takeaway with one supporting detail if useful.
 
 备注：Only include caveats or failures that affect trust in the result.
 ```
