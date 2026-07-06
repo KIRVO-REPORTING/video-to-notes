@@ -36,6 +36,29 @@ Key Points
         self.assertIn("watch?v=abc&amp;t=3723", rendered)
         self.assertIn("t=3723", rendered)
 
+    def test_foldable_segment_details_render_as_details(self) -> None:
+        summary = """Summary
+
+Short summary.
+
+Segment Conclusions
+
+<details>
+<summary>[01:24-02:44] Install the dock animation.</summary>
+
+The speaker shows why the dock animation matters for the overall workflow.
+- Keep the visual feedback compact.
+- Avoid turning every note into a rigid evidence table.
+</details>
+"""
+
+        rendered = render_summary(summary, "https://www.youtube.com/watch?v=abc")
+
+        self.assertIn('<details class="segment-detail">', rendered)
+        self.assertIn("<summary>", rendered)
+        self.assertIn("watch?v=abc&amp;t=84", rendered)
+        self.assertIn("Avoid turning every note into a rigid evidence table.", rendered)
+
     def test_report_prefers_summary_md_over_legacy_txt(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             folder = Path(tmp)

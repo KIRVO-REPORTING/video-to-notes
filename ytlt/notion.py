@@ -12,7 +12,11 @@ from pathlib import Path
 from typing import Any
 
 from .reporting import (
+    DETAILS_CLOSE_RE,
+    DETAILS_OPEN_RE,
+    SUMMARY_TAG_RE,
     TIMESTAMP_RE,
+    is_summary_section_heading,
     read_metadata,
     source_url_at_time,
     summary_file_path,
@@ -337,6 +341,10 @@ def _summary_blocks(summary: str, source_url: str) -> list[dict[str, Any]]:
     if not summary.strip():
         return [_heading("Summary", level=2), _paragraph("Summary pending.")]
 
+    return _summary_blocks_from_lines(summary.splitlines(), source_url)
+
+
+def _summary_blocks_from_lines(lines: list[str], source_url: str) -> list[dict[str, Any]]:
     blocks: list[dict[str, Any]] = []
     paragraph: list[str] = []
 
@@ -346,12 +354,20 @@ def _summary_blocks(summary: str, source_url: str) -> list[dict[str, Any]]:
             blocks.extend(_paragraph_blocks(" ".join(paragraph), source_url=source_url))
             paragraph = []
 
-    for raw_line in summary.splitlines():
+    index = 0
+    while index < len(lines):
+        raw_line = lines[index]
         line = raw_line.strip()
         if not line:
             flush_paragraph()
+            index += 1
             continue
-        if line.lower() in {"summary", "key points", "notes"}:
+        if DETAILS_OPEN_RE.match(line):
+            flush_paragraph()
+            toggle, index = _toggle_block_from_details(lines, index, source_url)
+            blocks.append(toggle)
+            continue
+        if is_summary_section_heading(line):
             flush_paragraph()
             blocks.append(_heading(line, level=2))
         elif line.startswith("### "):
@@ -365,9 +381,41 @@ def _summary_blocks(summary: str, source_url: str) -> list[dict[str, Any]]:
             blocks.append(_rich_block("bulleted_list_item", _timestamp_rich_text(line[2:].strip(), source_url)))
         else:
             paragraph.append(line)
+        index += 1
 
     flush_paragraph()
     return blocks
+
+
+def _toggle_block_from_details(
+    lines: list[str],
+    start_index: int,
+    source_url: str,
+) -> tuple[dict[str, Any], int]:
+    index = start_index + 1
+    summary = "Details"
+    if index < len(lines):
+        summary_match = SUMMARY_TAG_RE.match(lines[index].strip())
+        if summary_match:
+            summary = summary_match.group("text").strip() or summary
+            index += 1
+
+    body_lines: list[str] = []
+    depth = 1
+    while index < len(lines):
+        line = lines[index].strip()
+        if DETAILS_OPEN_RE.match(line):
+            depth += 1
+        elif DETAILS_CLOSE_RE.match(line):
+            depth -= 1
+            if depth == 0:
+                index += 1
+                break
+        body_lines.append(lines[index])
+        index += 1
+
+    children = _summary_blocks_from_lines(body_lines, source_url) if body_lines else [_paragraph("")]
+    return _toggle(summary, children, source_url=source_url), index
 
 
 def _paragraph_blocks(text: str, *, source_url: str | None = None) -> list[dict[str, Any]]:
@@ -396,6 +444,17 @@ def _timestamp_rich_text(text: str, source_url: str) -> list[dict[str, Any]]:
 def _heading(text: str, *, level: int) -> dict[str, Any]:
     block_type = "heading_3" if level == 3 else "heading_2"
     return _rich_block(block_type, _rich_text(text))
+
+
+def _toggle(text: str, children: list[dict[str, Any]], *, source_url: str) -> dict[str, Any]:
+    return {
+        "object": "block",
+        "type": "toggle",
+        "toggle": {
+            "rich_text": _timestamp_rich_text(text, source_url),
+            "children": children,
+        },
+    }
 
 
 def _paragraph(text: str) -> dict[str, Any]:

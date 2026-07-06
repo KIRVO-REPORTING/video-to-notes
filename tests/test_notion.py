@@ -119,7 +119,41 @@ class NotionPublishingTests(unittest.TestCase):
             self.assertIn('"content": "[01:24-02:44]"', rendered)
             self.assertIn('"url": "https://example.test/watch?v=abc&t=84"', rendered)
 
-    def _write_report_files(self, folder: Path, extra_metadata: dict[str, Any] | None = None) -> None:
+    def test_foldable_segments_become_notion_toggles(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            self._write_report_files(
+                folder,
+                summary=(
+                    "Summary\n\nShort summary.\n\nSegment Conclusions\n\n"
+                    "<details>\n"
+                    "<summary>[01:24-02:44] Important conclusion.</summary>\n\n"
+                    "Natural-language detail without rigid labels.\n"
+                    "- Supporting detail.\n"
+                    "</details>\n"
+                ),
+            )
+            client = FakeNotionClient()
+
+            publish_report_to_notion(
+                folder,
+                NotionPublishConfig(token="secret", data_source_id="data-source-123"),
+                client=client,  # type: ignore[arg-type]
+            )
+
+            children = client.appended[0]["children"]
+            rendered = json.dumps(children, ensure_ascii=False)
+            self.assertIn('"type": "toggle"', rendered)
+            self.assertIn('"content": "[01:24-02:44]"', rendered)
+            self.assertIn('"url": "https://example.test/watch?v=abc&t=84"', rendered)
+            self.assertIn("Natural-language detail without rigid labels.", rendered)
+
+    def _write_report_files(
+        self,
+        folder: Path,
+        extra_metadata: dict[str, Any] | None = None,
+        summary: str | None = None,
+    ) -> None:
         metadata = {
             "id": "abc",
             "title": "Video Title",
@@ -135,7 +169,7 @@ class NotionPublishingTests(unittest.TestCase):
         metadata.update(extra_metadata or {})
         (folder / "metadata.json").write_text(json.dumps(metadata), encoding="utf-8")
         (folder / "summary.md").write_text(
-            "Summary\n\nShort summary.\n\nKey Points\n\n- [01:24-02:44] Important point.\n",
+            summary or "Summary\n\nShort summary.\n\nKey Points\n\n- [01:24-02:44] Important point.\n",
             encoding="utf-8",
         )
         (folder / "transcript.txt").write_text("Transcript text.", encoding="utf-8")

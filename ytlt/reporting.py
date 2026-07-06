@@ -15,6 +15,19 @@ LEGACY_SUMMARY_FILENAME = "summary.txt"
 TIMESTAMP_RE = re.compile(
     r"\[(?P<start>\d{1,2}:\d{2}(?::\d{2})?)(?:-(?P<end>\d{1,2}:\d{2}(?::\d{2})?))?\]"
 )
+SUMMARY_SECTION_HEADINGS = {
+    "summary",
+    "key points",
+    "segment conclusions",
+    "notes",
+    "摘要",
+    "关键点",
+    "分段结论",
+    "备注",
+}
+DETAILS_OPEN_RE = re.compile(r"^<details(?:\s[^>]*)?>$", re.IGNORECASE)
+DETAILS_CLOSE_RE = re.compile(r"^</details>$", re.IGNORECASE)
+SUMMARY_TAG_RE = re.compile(r"^<summary>(?P<text>.*?)</summary>$", re.IGNORECASE)
 
 
 def slugify(value: str, max_length: int = 72) -> str:
@@ -74,6 +87,10 @@ def source_url_at_time(source_url: str | None, seconds: int) -> str | None:
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
 
 
+def is_summary_section_heading(value: str) -> bool:
+    return value.strip().lower() in SUMMARY_SECTION_HEADINGS
+
+
 def render_inline(text: str, source_url: str | None = None) -> str:
     rendered: list[str] = []
     cursor = 0
@@ -129,6 +146,10 @@ def render_summary(text: str, source_url: str | None = None) -> str:
     if not text.strip():
         return '<p class="muted">Summary pending. Write summary.md and run ytlt finalize.</p>'
 
+    return _render_summary_lines(text.splitlines(), source_url)
+
+
+def _render_summary_lines(lines: list[str], source_url: str | None = None) -> str:
     blocks: list[str] = []
     paragraph: list[str] = []
     bullets: list[str] = []
@@ -146,13 +167,22 @@ def render_summary(text: str, source_url: str | None = None) -> str:
             blocks.append(f"<ul>\n{items}\n</ul>")
             bullets = []
 
-    for raw_line in text.splitlines():
+    index = 0
+    while index < len(lines):
+        raw_line = lines[index]
         line = raw_line.strip()
         if not line:
             flush_paragraph()
             flush_bullets()
+            index += 1
             continue
-        if line.lower() in {"summary", "key points", "notes"}:
+        if DETAILS_OPEN_RE.match(line):
+            flush_paragraph()
+            flush_bullets()
+            details_html, index = _render_details_block(lines, index, source_url)
+            blocks.append(details_html)
+            continue
+        if is_summary_section_heading(line):
             flush_paragraph()
             flush_bullets()
             blocks.append(f"<h2>{html.escape(line)}</h2>")
@@ -170,10 +200,48 @@ def render_summary(text: str, source_url: str | None = None) -> str:
         else:
             flush_bullets()
             paragraph.append(line)
+        index += 1
 
     flush_paragraph()
     flush_bullets()
     return "\n".join(blocks)
+
+
+def _render_details_block(
+    lines: list[str],
+    start_index: int,
+    source_url: str | None = None,
+) -> tuple[str, int]:
+    index = start_index + 1
+    summary = "Details"
+    if index < len(lines):
+        summary_match = SUMMARY_TAG_RE.match(lines[index].strip())
+        if summary_match:
+            summary = summary_match.group("text").strip() or summary
+            index += 1
+
+    body_lines: list[str] = []
+    depth = 1
+    while index < len(lines):
+        line = lines[index].strip()
+        if DETAILS_OPEN_RE.match(line):
+            depth += 1
+        elif DETAILS_CLOSE_RE.match(line):
+            depth -= 1
+            if depth == 0:
+                index += 1
+                break
+        body_lines.append(lines[index])
+        index += 1
+
+    body = _render_summary_lines(body_lines, source_url) if body_lines else ""
+    return (
+        '<details class="segment-detail">\n'
+        f"<summary>{render_inline(summary, source_url)}</summary>\n"
+        f'<div class="details-body">\n{body}\n</div>\n'
+        "</details>",
+        index,
+    )
 
 
 def build_report_html(metadata: dict[str, Any], summary: str, transcript: str) -> str:
@@ -211,6 +279,12 @@ def build_report_html(metadata: dict[str, Any], summary: str, transcript: str) -
     th {{ width: 160px; color: var(--muted); font-weight: 650; }}
     a {{ color: #0b63ce; }}
     .timestamp-link {{ font-variant-numeric: tabular-nums; font-weight: 650; text-decoration-thickness: 1px; }}
+    details.segment-detail {{ border: 1px solid #d8dee8; border-radius: 8px; margin: 12px 0; background: #fbfcfe; }}
+    details.segment-detail summary {{ cursor: pointer; padding: 10px 12px; font-weight: 700; line-height: 1.45; }}
+    details.segment-detail[open] summary {{ border-bottom: 1px solid #e6ebf1; }}
+    .details-body {{ padding: 10px 14px 14px; }}
+    .details-body > :first-child {{ margin-top: 0; }}
+    .details-body > :last-child {{ margin-bottom: 0; }}
     code {{ background: #eef2f7; border-radius: 4px; padding: 1px 5px; }}
     pre {{ white-space: pre-wrap; word-wrap: break-word; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; }}
     .muted {{ color: var(--muted); }}

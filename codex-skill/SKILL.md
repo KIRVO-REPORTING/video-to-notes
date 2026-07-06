@@ -69,9 +69,9 @@ The JSON output includes the folder and report paths. Read `metadata.json` and `
 
 ## Write The Summary
 
-Write a grounded Markdown summary to `<video-folder>/summary.md`. Use the user's language unless the user requests another language. Prefer a segmented, answer-first structure over a flat list of bullets.
+Write a grounded Markdown summary to `<video-folder>/summary.md`. Use the user's language unless the user requests another language. Prefer a segmented, answer-first structure with foldable segment details over a flat list of bullets.
 
-Do not force every segment into `Point` / `Evidence` / `Implication` labels. Each segment should start with a timestamped conclusion and then use whichever compact format reads naturally: a short paragraph, 2-4 concise bullets, or a brief takeaway plus supporting detail. Include transcript-backed specifics, examples, claims, or caveats where they materially help, but avoid mechanical labels unless the user explicitly asks for them.
+Do not force every segment into `Point` / `Evidence` / `Implication` labels. Each segment should use a foldable block whose collapsed title is the timestamp range plus the segment conclusion. Put supporting details inside the folded body using natural prose, short bullets, or brief caveats. Include transcript-backed specifics, examples, claims, or caveats where they materially help, but avoid mechanical labels unless the user explicitly asks for them.
 
 Use this structure:
 
@@ -82,19 +82,25 @@ One-paragraph answer-first summary naming the video's core conclusion.
 
 Segment Conclusions
 
-[mm:ss-mm:ss] Segment conclusion
-Short paragraph or 2-4 concise bullets explaining the takeaway, the key supporting detail, and why it matters when useful.
+<details>
+<summary>[mm:ss-mm:ss] Segment conclusion</summary>
 
-[mm:ss-mm:ss] Segment conclusion
+Short paragraph or 2-4 concise bullets explaining the takeaway, the key supporting detail, and why it matters when useful.
+</details>
+
+<details>
+<summary>[mm:ss-mm:ss] Segment conclusion</summary>
+
 - Concise takeaway from this segment.
 - Concrete transcript-backed detail, example, claim, or caveat.
+</details>
 
 Notes
 
 - Caveats about subtitle quality, audio quality, uncertain terms, or incomplete transcript.
 ```
 
-For video reports, each segment heading must start with a bracketed timestamp or time range such as `[01:24-02:44]`, using the transcript's actual timing. Use `[hh:mm:ss-hh:mm:ss]` for videos longer than one hour. The report renderer and CLI Notion publisher convert bracketed timestamps into clickable source-video links that seek to the start time, so keep the timestamp at the beginning of each segment heading. When writing report content through the Notion connector Markdown path, avoid colons in the linked label because Notion can split the link; use an inline link like `[01m24s-02m44s](https://www.youtube.com/watch?v=VIDEO_ID&t=84)` instead of leaving it as plain text.
+For video reports, each `<summary>` line must start with a bracketed timestamp or time range such as `[01:24-02:44]`, using the transcript's actual timing. Use `[hh:mm:ss-hh:mm:ss]` for videos longer than one hour. The report renderer and CLI Notion publisher convert bracketed timestamps into clickable source-video links that seek to the start time, so keep the timestamp at the beginning of each folded segment summary. When writing report content through the Notion connector Markdown path, avoid colons in the linked label because Notion can split the link; use an inline link like `[01m24s-02m44s](https://www.youtube.com/watch?v=VIDEO_ID&t=84)` instead of leaving it as plain text.
 
 Finalize:
 
@@ -176,8 +182,11 @@ Use this row body structure:
 One answer-first summary paragraph.
 
 ## 分段结论
-[01m24s-02m44s](SOURCE_URL_WITH_t=84) Segment conclusion.
+<details>
+<summary>[01m24s-02m44s](SOURCE_URL_WITH_t=84) Segment conclusion</summary>
+
 Short paragraph or 2-4 concise bullets explaining the segment's takeaway with concrete transcript-backed details. Do not force `Point` / `Evidence` / `Implication` labels unless the user asks for that format.
+</details>
 
 ## 备注
 - Caveats about subtitles, transcription, uncertain terms, or source claims.
@@ -220,8 +229,18 @@ Notion 报告：NOTION_ROW_URL
 摘要：One concise answer-first paragraph.
 
 分段结论
-- [mm:ss-mm:ss] Segment conclusion: concise natural-language takeaway.
-- [mm:ss-mm:ss] Segment conclusion: concise natural-language takeaway with one supporting detail if useful.
+
+<details>
+<summary>[mm:ss-mm:ss] Segment conclusion</summary>
+
+Concise natural-language details, examples, or caveats from this segment.
+</details>
+
+<details>
+<summary>[mm:ss-mm:ss] Segment conclusion</summary>
+
+Concise natural-language details, examples, or caveats from this segment.
+</details>
 
 备注：Only include caveats or failures that affect trust in the result.
 ```
