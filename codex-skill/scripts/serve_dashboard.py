@@ -8,7 +8,7 @@ def main() -> int:
     try:
         from ytlt.cli import main as ytlt_main
     except ImportError:
-        print("ytlt is not installed. From the repository root, run ./install.sh or install.ps1.", file=sys.stderr)
+        print("video-to-notes is not installed. From the repository root, run ./install.sh or install.ps1.", file=sys.stderr)
         return 2
     return ytlt_main(["serve", *sys.argv[1:]])
 

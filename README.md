@@ -1,8 +1,8 @@
-# youtube-local-transcribe
+# video-to-notes
 
 Caption first. Local Whisper when needed. Searchable local reports. Optional Notion or Obsidian publishing.
 
-`youtube-local-transcribe` turns YouTube, Bilibili, TED, and other `yt-dlp` supported video URLs into local transcripts, grounded summaries, browser-readable HTML reports, and optional Notion or Obsidian knowledge-base entries.
+`video-to-notes` turns YouTube, Bilibili, TED, and other `yt-dlp` supported video URLs into local transcripts, grounded summaries, browser-readable HTML reports, and optional Notion or Obsidian knowledge-base entries.
 
 - [中文说明](#中文说明)
 - [English](#english)
@@ -11,12 +11,14 @@ Caption first. Local Whisper when needed. Searchable local reports. Optional Not
 
 ### 这个项目是做什么的
 
-`youtube-local-transcribe` 是一个面向 AI Coding Agent 和命令行用户的视频资料整理工具。它会优先下载视频自带字幕，在没有合适字幕时才使用本地 Whisper 转写，并把每个视频整理成可追溯的本地报告。
+`video-to-notes` 是一个面向 AI Coding Agent 和命令行用户的视频资料整理工具。它会优先下载视频自带字幕，在没有合适字幕时才使用本地 Whisper 转写，并把每个视频整理成可追溯的本地报告。
 
 这个仓库包含两部分：
 
-- `ytlt`: Python CLI，负责环境检测、用户配置、字幕下载、本地 Whisper fallback、报告生成、Notion/Obsidian 发布和本地 dashboard。
-- `codex-skill`: Codex 技能说明，让 Codex 知道如何调用 `ytlt`、读取转写文本、写出有时间戳依据的摘要报告。
+- `video-to-notes`: Python CLI，负责环境检测、用户配置、字幕下载、本地 Whisper fallback、报告生成、Notion/Obsidian 发布和本地 dashboard。
+- `codex-skill`: Codex 技能说明，让 Codex 知道如何调用 `video-to-notes`、读取转写文本、写出有时间戳依据的摘要报告。
+
+兼容说明：旧命令 `ytlt` 仍保留为别名；公开文档和安装流程统一使用 `video-to-notes`。
 
 ### 要解决的问题
 
@@ -34,43 +36,43 @@ Caption first. Local Whisper when needed. Searchable local reports. Optional Not
 把下面这一行复制给 Codex 或 Claude Code，它就可以按这个项目的方式安装和配置：
 
 ```text
-请安装并配置 youtube-local-transcribe：克隆 https://github.com/KIRVO-REPORTING/youtube-local-transcribe-skill-public，进入仓库后在 macOS/Linux 运行 ./install.sh，Windows PowerShell 运行 powershell -ExecutionPolicy Bypass -File .\install.ps1；如果脚本提示没有 Python，请先按脚本给出的系统指令安装 Python 3.9+ 后重跑；如果当前工具是 Codex，请把 codex-skill 安装到 ~/.codex/skills/youtube-local-transcribe；然后运行 ytlt configure，让用户选择常用语言、硬件推荐的 Whisper fallback 模型或不安装模型，以及默认输出环境 local/notion/obsidian；最后用 ytlt process "VIDEO_URL" 处理视频。
+请安装并配置 video-to-notes：克隆 https://github.com/KIRVO-REPORTING/video-to-notes，进入仓库后在 macOS/Linux 运行 ./install.sh，Windows PowerShell 运行 powershell -ExecutionPolicy Bypass -File .\install.ps1；如果脚本提示没有 Python，请先按脚本给出的系统指令安装 Python 3.9+ 后重跑；如果当前工具是 Codex，请把 codex-skill 安装到 ~/.codex/skills/video-to-notes；然后运行 video-to-notes configure，让用户选择常用语言、硬件推荐的 Whisper fallback 模型或不安装模型，以及默认输出环境 local/notion/obsidian；最后用 video-to-notes process "VIDEO_URL" 处理视频。
 ```
 
 ### 工作流程简介
 
 1. 用户给出一个视频 URL。
-2. `ytlt process "VIDEO_URL"` 调用 `yt-dlp` 获取元数据和字幕。
+2. `video-to-notes process "VIDEO_URL"` 调用 `yt-dlp` 获取元数据和字幕。
 3. 工具优先使用人工字幕或自动字幕；字幕不可用时，才走本地 Whisper。
 4. 每个视频会生成独立目录，包含 `metadata.json`、`transcript.txt` 和 `report.html`。
 5. Codex 或其他 Agent 读取 `metadata.json` 与 `transcript.txt`，写入有依据的 `summary.md`。
-6. `ytlt finalize "<video-folder>"` 重新渲染最终 HTML 报告，清理下载的视频文件，并刷新 dashboard。
+6. `video-to-notes finalize "<video-folder>"` 重新渲染最终 HTML 报告，清理下载的视频文件，并刷新 dashboard。
 7. 根据配置或命令参数，把报告保留在本地 dashboard，或发布/更新到 Notion、Obsidian。
 
 ### 快速安装
 
-推荐使用仓库自带的 bootstrap 脚本。它会先检测 Python 3.9+、pip 和 venv；如果缺失，会给出 macOS、Linux 或 Windows 的安装指令。检测通过后，它会创建 `.venv`、安装基础依赖，并提示是否启动 `ytlt configure`。
+推荐使用仓库自带的 bootstrap 脚本。它会先检测 Python 3.9+、pip 和 venv；如果缺失，会给出 macOS、Linux 或 Windows 的安装指令。检测通过后，它会创建 `.venv`、安装基础依赖，并提示是否启动 `video-to-notes configure`。
 
 macOS / Linux:
 
 ```bash
-git clone https://github.com/KIRVO-REPORTING/youtube-local-transcribe-skill-public.git
-cd youtube-local-transcribe-skill-public
+git clone https://github.com/KIRVO-REPORTING/video-to-notes.git
+cd video-to-notes
 ./install.sh
 ```
 
 Windows PowerShell:
 
 ```powershell
-git clone https://github.com/KIRVO-REPORTING/youtube-local-transcribe-skill-public.git
-cd youtube-local-transcribe-skill-public
+git clone https://github.com/KIRVO-REPORTING/video-to-notes.git
+cd video-to-notes
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
 如果安装脚本没有自动启动配置，手动运行：
 
 ```bash
-ytlt configure
+video-to-notes configure
 ```
 
 配置会让用户选择三件事：
@@ -82,13 +84,13 @@ ytlt configure
 也可以用非交互方式配置：
 
 ```bash
-ytlt configure --language zh --model-choice recommended --environment local --execute
-ytlt configure --language zh --model-choice recommended --environment notion --execute
-ytlt configure --language zh --model-choice recommended --environment obsidian --execute
-ytlt configure --language zh --model-choice none --environment local
+video-to-notes configure --language zh --model-choice recommended --environment local --execute
+video-to-notes configure --language zh --model-choice recommended --environment notion --execute
+video-to-notes configure --language zh --model-choice recommended --environment obsidian --execute
+video-to-notes configure --language zh --model-choice none --environment local
 ```
 
-`--execute` 会安装推荐后端、确认 ffmpeg、按硬件条件下载或配置推荐模型，并写入 workspace 配置。`ytlt setup --execute` 仍然可用，但推荐先用 `ytlt configure`，因为它同时保存语言和输出环境偏好。
+`--execute` 会安装推荐后端、确认 ffmpeg、按硬件条件下载或配置推荐模型，并写入 workspace 配置。`video-to-notes setup --execute` 仍然可用，但推荐先用 `video-to-notes configure`，因为它同时保存语言和输出环境偏好。
 
 如果你已经有 Python 3.9+，也可以手动安装到虚拟环境：
 
@@ -97,7 +99,7 @@ python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install --upgrade pip setuptools wheel
 python -m pip install -e .
-ytlt configure
+video-to-notes configure
 ```
 
 Windows PowerShell 手动安装：
@@ -107,13 +109,13 @@ py -3 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip setuptools wheel
 python -m pip install -e .
-ytlt configure
+video-to-notes configure
 ```
 
 处理一个视频：
 
 ```bash
-ytlt process "VIDEO_URL"
+video-to-notes process "VIDEO_URL"
 ```
 
 默认 workspace：
@@ -125,27 +127,27 @@ ytlt process "VIDEO_URL"
 指定其它 workspace：
 
 ```bash
-ytlt process "VIDEO_URL" --workspace /path/to/workspace
+video-to-notes process "VIDEO_URL" --workspace /path/to/workspace
 ```
 
 ### 常用命令
 
 | 场景 | 命令 |
 |---|---|
-| 交互式选择语言、模型和输出环境 | `ytlt configure` |
-| 查看硬件推荐模型 | `ytlt recommend` |
-| 下载字幕并生成报告 | `ytlt process "VIDEO_URL" --language zh --open` |
-| 使用浏览器 cookies | `ytlt process "VIDEO_URL" --cookies-from-browser chrome` |
-| 强制本地 Whisper 转写 | `ytlt process "VIDEO_URL" --force-transcribe` |
-| 字幕缺失时不做本地转写 | `ytlt process "VIDEO_URL" --no-transcribe-fallback` |
-| 写好 `summary.md` 后重新生成报告 | `ytlt finalize "/path/to/video-folder" --open` |
-| 发布或更新 Notion 报告 | `ytlt finalize "/path/to/video-folder" --publish-notion` |
-| 发布已有处理目录到 Notion | `ytlt publish-notion "/path/to/video-folder"` |
-| 发布已有处理目录到 Obsidian | `ytlt publish-obsidian "/path/to/video-folder"` |
-| 同步 workspace 里的报告到 Obsidian | `ytlt sync-obsidian` |
-| 临时覆盖输出环境 | `ytlt finalize "/path/to/video-folder" --environment obsidian` |
-| 重建本地索引 | `ytlt rebuild-index` |
-| 打开本地 dashboard | `ytlt serve --open` |
+| 交互式选择语言、模型和输出环境 | `video-to-notes configure` |
+| 查看硬件推荐模型 | `video-to-notes recommend` |
+| 下载字幕并生成报告 | `video-to-notes process "VIDEO_URL" --language zh --open` |
+| 使用浏览器 cookies | `video-to-notes process "VIDEO_URL" --cookies-from-browser chrome` |
+| 强制本地 Whisper 转写 | `video-to-notes process "VIDEO_URL" --force-transcribe` |
+| 字幕缺失时不做本地转写 | `video-to-notes process "VIDEO_URL" --no-transcribe-fallback` |
+| 写好 `summary.md` 后重新生成报告 | `video-to-notes finalize "/path/to/video-folder" --open` |
+| 发布或更新 Notion 报告 | `video-to-notes finalize "/path/to/video-folder" --publish-notion` |
+| 发布已有处理目录到 Notion | `video-to-notes publish-notion "/path/to/video-folder"` |
+| 发布已有处理目录到 Obsidian | `video-to-notes publish-obsidian "/path/to/video-folder"` |
+| 同步 workspace 里的报告到 Obsidian | `video-to-notes sync-obsidian` |
+| 临时覆盖输出环境 | `video-to-notes finalize "/path/to/video-folder" --environment obsidian` |
+| 重建本地索引 | `video-to-notes rebuild-index` |
+| 打开本地 dashboard | `video-to-notes serve --open` |
 
 每个处理后的视频目录位于：
 
@@ -165,14 +167,14 @@ ytlt process "VIDEO_URL" --workspace /path/to/workspace
 从克隆后的仓库安装：
 
 ```bash
-mkdir -p "$HOME/.codex/skills/youtube-local-transcribe"
-rsync -a --delete codex-skill/ "$HOME/.codex/skills/youtube-local-transcribe/"
+mkdir -p "$HOME/.codex/skills/video-to-notes"
+rsync -a --delete codex-skill/ "$HOME/.codex/skills/video-to-notes/"
 ```
 
 Windows PowerShell：
 
 ```powershell
-$target = Join-Path $HOME ".codex\skills\youtube-local-transcribe"; if (Test-Path $target) { Remove-Item $target -Recurse -Force }; New-Item -ItemType Directory -Force $target | Out-Null; Copy-Item ".\codex-skill\*" $target -Recurse -Force
+$target = Join-Path $HOME ".codex\skills\video-to-notes"; if (Test-Path $target) { Remove-Item $target -Recurse -Force }; New-Item -ItemType Directory -Force $target | Out-Null; Copy-Item ".\codex-skill\*" $target -Recurse -Force
 ```
 
 替换已安装技能后，重启 Codex，让新的 `SKILL.md` 元数据生效。
@@ -180,12 +182,12 @@ $target = Join-Path $HOME ".codex\skills\youtube-local-transcribe"; if (Test-Pat
 然后把视频链接发给 Codex，或直接说：
 
 ```text
-Use youtube-local-transcribe to process this video and create a summary report: VIDEO_URL
+Use video-to-notes to process this video and create a summary report: VIDEO_URL
 ```
 
 ### 发布到 Notion
 
-如果用户在 Codex、ChatGPT 或其它 agent 环境里已经连接了 Notion connector/MCP，优先走 connector/MCP 路径：让 agent 在 Notion 里创建或复用 `本地视频报告数据库`，然后在 `ytlt finalize` 生成本地报告后，用 connector/MCP 写入或更新数据库行。这个路径不需要在本机设置 `NOTION_TOKEN`，也不要声称是 CLI 直接发布。
+如果用户在 Codex、ChatGPT 或其它 agent 环境里已经连接了 Notion connector/MCP，优先走 connector/MCP 路径：让 agent 在 Notion 里创建或复用 `本地视频报告数据库`，然后在 `video-to-notes finalize` 生成本地报告后，用 connector/MCP 写入或更新数据库行。这个路径不需要在本机设置 `NOTION_TOKEN`，也不要声称是 CLI 直接发布。
 
 只有在纯命令行环境、没有 Notion connector/MCP 时，才需要创建 Notion integration token，把目标页面或 data source 分享给该 integration，然后设置：
 
@@ -203,24 +205,24 @@ export NOTION_DATA_SOURCE_ID="..."
 处理时发布：
 
 ```bash
-ytlt process "VIDEO_URL" --language zh --publish-notion
+video-to-notes process "VIDEO_URL" --language zh --publish-notion
 ```
 
 已有目录发布：
 
 ```bash
-ytlt publish-notion "/path/to/processed/video-folder"
+video-to-notes publish-notion "/path/to/processed/video-folder"
 ```
 
 发布成功后，`metadata.json` 会记录 `notion_page_id`、`notion_url` 和 `notion_synced_at`，后续发布会更新同一条 Notion 页面，避免重复。
 
-如果在 `ytlt configure` 中选择了 `notion`，`ytlt process` 和 `ytlt finalize` 会默认发布到 Notion。仍然可以用 `--environment local` 临时只生成本地报告。
+如果在 `video-to-notes configure` 中选择了 `notion`，`video-to-notes process` 和 `video-to-notes finalize` 会默认发布到 Notion。仍然可以用 `--environment local` 临时只生成本地报告。
 
 在 agent 环境中，如果没有 CLI token 但有 Notion connector/MCP，流程是：
 
-1. `ytlt process "VIDEO_URL"` 生成本地 transcript 和 report。
+1. `video-to-notes process "VIDEO_URL"` 生成本地 transcript 和 report。
 2. Agent 读取 `metadata.json`、`transcript.txt`、`summary.md`。
-3. `ytlt finalize "<video-folder>"` 刷新本地报告。
+3. `video-to-notes finalize "<video-folder>"` 刷新本地报告。
 4. Agent 通过 Notion connector/MCP 创建或更新报告数据库行。
 5. Agent 把 Notion row URL 和本地 report path 返回给用户。
 
@@ -242,14 +244,14 @@ export OBSIDIAN_INDEX_NOTE="Video Reports Dashboard.md"
 处理或 finalize 时发布：
 
 ```bash
-ytlt finalize "/path/to/processed/video-folder" --publish-obsidian
-ytlt publish-obsidian "/path/to/processed/video-folder"
+video-to-notes finalize "/path/to/processed/video-folder" --publish-obsidian
+video-to-notes publish-obsidian "/path/to/processed/video-folder"
 ```
 
 同步整个 workspace：
 
 ```bash
-ytlt sync-obsidian
+video-to-notes sync-obsidian
 ```
 
 Obsidian 发布会在 vault 中创建或更新一篇 Markdown 报告，并维护一个 dashboard note。报告包含 YAML frontmatter、视频元数据、摘要、时间戳链接、本地报告路径和可选全文 transcript。
@@ -267,14 +269,14 @@ python -m unittest discover -s tests
 字幕优先 smoke test：
 
 ```bash
-ytlt process "https://www.ted.com/talks/sir_ken_robinson_do_schools_kill_creativity" --language en --no-transcribe-fallback
+video-to-notes process "https://www.ted.com/talks/sir_ken_robinson_do_schools_kill_creativity" --language en --no-transcribe-fallback
 ```
 
 ### 注意事项
 
 - 需要 Python 3.9 或更新版本，推荐 Python 3.10+。
 - 字幕永远优先于本地 Whisper。
-- 推荐 `ytlt configure`；`ytlt setup --execute` 只配置模型，不保存语言和输出环境偏好。
+- 推荐 `video-to-notes configure`；`video-to-notes setup --execute` 只配置模型，不保存语言和输出环境偏好。
 - 选择不安装 Whisper 模型不推荐；有字幕的视频仍可处理，但无字幕视频无法本地 fallback。
 - 硬件模型选择规则见 `codex-skill/references/model-selection.md`。
 - workspace、下载媒体、模型、虚拟环境和构建产物会被 `.gitignore` 排除。
@@ -283,12 +285,14 @@ ytlt process "https://www.ted.com/talks/sir_ken_robinson_do_schools_kill_creativ
 
 ### What this project does
 
-`youtube-local-transcribe` is a video knowledge capture workflow for AI coding agents and command-line users. It prefers existing captions, falls back to local Whisper only when captions are missing or unsuitable, and turns each video into a traceable local report.
+`video-to-notes` is a video knowledge capture workflow for AI coding agents and command-line users. It prefers existing captions, falls back to local Whisper only when captions are missing or unsuitable, and turns each video into a traceable local report.
 
 This repository contains:
 
-- `ytlt`: a Python CLI for machine probing, user configuration, caption download, local Whisper fallback, report generation, Notion/Obsidian publishing, and local dashboard serving.
-- `codex-skill`: a Codex skill wrapper that teaches Codex how to run `ytlt`, read transcripts, and write grounded timestamped summaries.
+- `video-to-notes`: a Python CLI for machine probing, user configuration, caption download, local Whisper fallback, report generation, Notion/Obsidian publishing, and local dashboard serving.
+- `codex-skill`: a Codex skill wrapper that teaches Codex how to run `video-to-notes`, read transcripts, and write grounded timestamped summaries.
+
+Compatibility: the old `ytlt` command remains available as an alias; public docs and setup flows use `video-to-notes`.
 
 ### Problem it solves
 
@@ -301,43 +305,43 @@ This project makes the workflow repeatable: captions first, local transcription 
 Copy this single line into Codex or Claude Code:
 
 ```text
-Install and configure youtube-local-transcribe: clone https://github.com/KIRVO-REPORTING/youtube-local-transcribe-skill-public, enter the repo, run ./install.sh on macOS/Linux or powershell -ExecutionPolicy Bypass -File .\install.ps1 in Windows PowerShell; if the script says Python is missing, install Python 3.9+ using the script's OS-specific instructions and re-run it; if this is Codex, install codex-skill to ~/.codex/skills/youtube-local-transcribe; then run ytlt configure so the user can choose their usual language, the hardware-recommended Whisper fallback model or no model, and the default output environment local/notion/obsidian; finally process a video with ytlt process "VIDEO_URL".
+Install and configure video-to-notes: clone https://github.com/KIRVO-REPORTING/video-to-notes, enter the repo, run ./install.sh on macOS/Linux or powershell -ExecutionPolicy Bypass -File .\install.ps1 in Windows PowerShell; if the script says Python is missing, install Python 3.9+ using the script's OS-specific instructions and re-run it; if this is Codex, install codex-skill to ~/.codex/skills/video-to-notes; then run video-to-notes configure so the user can choose their usual language, the hardware-recommended Whisper fallback model or no model, and the default output environment local/notion/obsidian; finally process a video with video-to-notes process "VIDEO_URL".
 ```
 
 ### Workflow overview
 
 1. The user provides a video URL.
-2. `ytlt process "VIDEO_URL"` uses `yt-dlp` to fetch metadata and captions.
+2. `video-to-notes process "VIDEO_URL"` uses `yt-dlp` to fetch metadata and captions.
 3. The tool uses manual or automatic captions first; if captions are unavailable, it can fall back to local Whisper.
 4. Each video gets its own folder with `metadata.json`, `transcript.txt`, and `report.html`.
 5. Codex or another agent reads `metadata.json` and `transcript.txt`, then writes a grounded `summary.md`.
-6. `ytlt finalize "<video-folder>"` re-renders the final HTML report, removes retained downloaded video files, and refreshes the dashboard.
+6. `video-to-notes finalize "<video-folder>"` re-renders the final HTML report, removes retained downloaded video files, and refreshes the dashboard.
 7. Based on configuration or command flags, keep the report local or publish/update it in Notion or Obsidian.
 
 ### Quick install
 
-Use the repository bootstrap script first. It checks for Python 3.9+, pip, and venv support; if something is missing, it prints platform-specific install instructions. After the checks pass, it creates `.venv`, installs the base dependencies, and offers to start `ytlt configure`.
+Use the repository bootstrap script first. It checks for Python 3.9+, pip, and venv support; if something is missing, it prints platform-specific install instructions. After the checks pass, it creates `.venv`, installs the base dependencies, and offers to start `video-to-notes configure`.
 
 macOS / Linux:
 
 ```bash
-git clone https://github.com/KIRVO-REPORTING/youtube-local-transcribe-skill-public.git
-cd youtube-local-transcribe-skill-public
+git clone https://github.com/KIRVO-REPORTING/video-to-notes.git
+cd video-to-notes
 ./install.sh
 ```
 
 Windows PowerShell:
 
 ```powershell
-git clone https://github.com/KIRVO-REPORTING/youtube-local-transcribe-skill-public.git
-cd youtube-local-transcribe-skill-public
+git clone https://github.com/KIRVO-REPORTING/video-to-notes.git
+cd video-to-notes
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
 If the installer did not start the wizard automatically, run:
 
 ```bash
-ytlt configure
+video-to-notes configure
 ```
 
 The wizard asks for:
@@ -349,13 +353,13 @@ The wizard asks for:
 Non-interactive examples:
 
 ```bash
-ytlt configure --language en --model-choice recommended --environment local --execute
-ytlt configure --language en --model-choice recommended --environment notion --execute
-ytlt configure --language en --model-choice recommended --environment obsidian --execute
-ytlt configure --language en --model-choice none --environment local
+video-to-notes configure --language en --model-choice recommended --environment local --execute
+video-to-notes configure --language en --model-choice recommended --environment notion --execute
+video-to-notes configure --language en --model-choice recommended --environment obsidian --execute
+video-to-notes configure --language en --model-choice none --environment local
 ```
 
-`--execute` installs the selected backend, verifies ffmpeg, downloads or configures the recommended model when needed, and writes workspace configuration. `ytlt setup --execute` remains available, but `ytlt configure` is recommended because it also saves language and output-environment preferences.
+`--execute` installs the selected backend, verifies ffmpeg, downloads or configures the recommended model when needed, and writes workspace configuration. `video-to-notes setup --execute` remains available, but `video-to-notes configure` is recommended because it also saves language and output-environment preferences.
 
 If Python 3.9+ is already installed and you prefer a manual setup, use a virtual environment:
 
@@ -364,7 +368,7 @@ python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install --upgrade pip setuptools wheel
 python -m pip install -e .
-ytlt configure
+video-to-notes configure
 ```
 
 Windows PowerShell manual setup:
@@ -374,13 +378,13 @@ py -3 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip setuptools wheel
 python -m pip install -e .
-ytlt configure
+video-to-notes configure
 ```
 
 Process a video:
 
 ```bash
-ytlt process "VIDEO_URL"
+video-to-notes process "VIDEO_URL"
 ```
 
 Default workspace:
@@ -392,27 +396,27 @@ Default workspace:
 Use another workspace:
 
 ```bash
-ytlt process "VIDEO_URL" --workspace /path/to/workspace
+video-to-notes process "VIDEO_URL" --workspace /path/to/workspace
 ```
 
 ### Common commands
 
 | Use case | Command |
 |---|---|
-| Choose language, model, and output environment | `ytlt configure` |
-| Inspect the hardware recommendation | `ytlt recommend` |
-| Download captions and build a report | `ytlt process "VIDEO_URL" --language en --open` |
-| Use browser cookies | `ytlt process "VIDEO_URL" --cookies-from-browser chrome` |
-| Force local Whisper transcription | `ytlt process "VIDEO_URL" --force-transcribe` |
-| Skip local transcription when captions are missing | `ytlt process "VIDEO_URL" --no-transcribe-fallback` |
-| Re-render after writing `summary.md` | `ytlt finalize "/path/to/video-folder" --open` |
-| Publish or update a Notion report | `ytlt finalize "/path/to/video-folder" --publish-notion` |
-| Publish an existing folder to Notion | `ytlt publish-notion "/path/to/video-folder"` |
-| Publish an existing folder to Obsidian | `ytlt publish-obsidian "/path/to/video-folder"` |
-| Sync workspace reports to Obsidian | `ytlt sync-obsidian` |
-| Temporarily override output environment | `ytlt finalize "/path/to/video-folder" --environment obsidian` |
-| Rebuild local index | `ytlt rebuild-index` |
-| Open local dashboard | `ytlt serve --open` |
+| Choose language, model, and output environment | `video-to-notes configure` |
+| Inspect the hardware recommendation | `video-to-notes recommend` |
+| Download captions and build a report | `video-to-notes process "VIDEO_URL" --language en --open` |
+| Use browser cookies | `video-to-notes process "VIDEO_URL" --cookies-from-browser chrome` |
+| Force local Whisper transcription | `video-to-notes process "VIDEO_URL" --force-transcribe` |
+| Skip local transcription when captions are missing | `video-to-notes process "VIDEO_URL" --no-transcribe-fallback` |
+| Re-render after writing `summary.md` | `video-to-notes finalize "/path/to/video-folder" --open` |
+| Publish or update a Notion report | `video-to-notes finalize "/path/to/video-folder" --publish-notion` |
+| Publish an existing folder to Notion | `video-to-notes publish-notion "/path/to/video-folder"` |
+| Publish an existing folder to Obsidian | `video-to-notes publish-obsidian "/path/to/video-folder"` |
+| Sync workspace reports to Obsidian | `video-to-notes sync-obsidian` |
+| Temporarily override output environment | `video-to-notes finalize "/path/to/video-folder" --environment obsidian` |
+| Rebuild local index | `video-to-notes rebuild-index` |
+| Open local dashboard | `video-to-notes serve --open` |
 
 Each processed video folder is created under:
 
@@ -432,14 +436,14 @@ Typical outputs:
 From a cloned copy of this repo:
 
 ```bash
-mkdir -p "$HOME/.codex/skills/youtube-local-transcribe"
-rsync -a --delete codex-skill/ "$HOME/.codex/skills/youtube-local-transcribe/"
+mkdir -p "$HOME/.codex/skills/video-to-notes"
+rsync -a --delete codex-skill/ "$HOME/.codex/skills/video-to-notes/"
 ```
 
 Windows PowerShell:
 
 ```powershell
-$target = Join-Path $HOME ".codex\skills\youtube-local-transcribe"; if (Test-Path $target) { Remove-Item $target -Recurse -Force }; New-Item -ItemType Directory -Force $target | Out-Null; Copy-Item ".\codex-skill\*" $target -Recurse -Force
+$target = Join-Path $HOME ".codex\skills\video-to-notes"; if (Test-Path $target) { Remove-Item $target -Recurse -Force }; New-Item -ItemType Directory -Force $target | Out-Null; Copy-Item ".\codex-skill\*" $target -Recurse -Force
 ```
 
 Restart Codex after replacing an installed skill so the new `SKILL.md` metadata is loaded.
@@ -447,12 +451,12 @@ Restart Codex after replacing an installed skill so the new `SKILL.md` metadata 
 Then send Codex a video URL or ask:
 
 ```text
-Use youtube-local-transcribe to process this video and create a summary report: VIDEO_URL
+Use video-to-notes to process this video and create a summary report: VIDEO_URL
 ```
 
 ### Publish to Notion
 
-If the user already has a Notion connector/MCP connected in Codex, ChatGPT, or another agent environment, prefer the connector/MCP path: have the agent create or reuse the `本地视频报告数据库` Notion database, then write or update the database row after `ytlt finalize` creates the local report. This path does not require setting `NOTION_TOKEN` locally, and the agent should not claim that the CLI published to Notion.
+If the user already has a Notion connector/MCP connected in Codex, ChatGPT, or another agent environment, prefer the connector/MCP path: have the agent create or reuse the `本地视频报告数据库` Notion database, then write or update the database row after `video-to-notes finalize` creates the local report. This path does not require setting `NOTION_TOKEN` locally, and the agent should not claim that the CLI published to Notion.
 
 Only for CLI-only environments without a Notion connector/MCP, create a Notion integration token, share the target page or data source with the integration, then set:
 
@@ -470,24 +474,24 @@ Use exactly one target:
 Publish while processing:
 
 ```bash
-ytlt process "VIDEO_URL" --language en --publish-notion
+video-to-notes process "VIDEO_URL" --language en --publish-notion
 ```
 
 Publish an existing processed folder:
 
 ```bash
-ytlt publish-notion "/path/to/processed/video-folder"
+video-to-notes publish-notion "/path/to/processed/video-folder"
 ```
 
 After publishing, `metadata.json` records `notion_page_id`, `notion_url`, and `notion_synced_at`; later publishes update the same Notion page instead of creating duplicates.
 
-If `notion` was selected in `ytlt configure`, `ytlt process` and `ytlt finalize` publish to Notion by default. Use `--environment local` to generate only local files for a single run.
+If `notion` was selected in `video-to-notes configure`, `video-to-notes process` and `video-to-notes finalize` publish to Notion by default. Use `--environment local` to generate only local files for a single run.
 
 In an agent environment with no CLI token but with a Notion connector/MCP, the flow is:
 
-1. `ytlt process "VIDEO_URL"` creates local transcript and report files.
+1. `video-to-notes process "VIDEO_URL"` creates local transcript and report files.
 2. The agent reads `metadata.json`, `transcript.txt`, and `summary.md`.
-3. `ytlt finalize "<video-folder>"` refreshes the local report.
+3. `video-to-notes finalize "<video-folder>"` refreshes the local report.
 4. The agent creates or updates the Notion database row through the connector/MCP.
 5. The agent returns the Notion row URL and local report path.
 
@@ -509,14 +513,14 @@ export OBSIDIAN_INDEX_NOTE="Video Reports Dashboard.md"
 Publish during finalization or publish an existing processed folder:
 
 ```bash
-ytlt finalize "/path/to/processed/video-folder" --publish-obsidian
-ytlt publish-obsidian "/path/to/processed/video-folder"
+video-to-notes finalize "/path/to/processed/video-folder" --publish-obsidian
+video-to-notes publish-obsidian "/path/to/processed/video-folder"
 ```
 
 Sync the whole workspace:
 
 ```bash
-ytlt sync-obsidian
+video-to-notes sync-obsidian
 ```
 
 Obsidian publishing creates or updates a Markdown report note in the vault and maintains a dashboard note. Each report includes YAML frontmatter, video metadata, summary, timestamp links, local report path, and an optional full transcript.
@@ -534,14 +538,14 @@ python -m unittest discover -s tests
 Caption-first smoke test:
 
 ```bash
-ytlt process "https://www.ted.com/talks/sir_ken_robinson_do_schools_kill_creativity" --language en --no-transcribe-fallback
+video-to-notes process "https://www.ted.com/talks/sir_ken_robinson_do_schools_kill_creativity" --language en --no-transcribe-fallback
 ```
 
 ### Notes
 
 - Python 3.9+ is required. Python 3.10+ is recommended.
 - Captions are always preferred before local Whisper.
-- `ytlt configure` is recommended; `ytlt setup --execute` only configures the model and does not save language or output-environment preferences.
+- `video-to-notes configure` is recommended; `video-to-notes setup --execute` only configures the model and does not save language or output-environment preferences.
 - Choosing no Whisper model is not recommended. Captioned videos still work, but captionless videos cannot fall back to local transcription.
 - Hardware model selection lives in `codex-skill/references/model-selection.md`.
 - Generated workspaces, downloaded media, models, virtual environments, and build metadata are ignored by `.gitignore`.

@@ -87,13 +87,13 @@ if (-not (Test-Path ".venv")) {
 }
 
 $VenvPython = Join-Path $RepoDir ".venv\Scripts\python.exe"
-$VenvYtlt = Join-Path $RepoDir ".venv\Scripts\ytlt.exe"
+$VenvCommand = Join-Path $RepoDir ".venv\Scripts\video-to-notes.exe"
 if (-not (Test-Path $VenvPython)) {
     Write-Host "Virtual environment Python was not found at $VenvPython"
     exit 1
 }
 
-Write-Host "Installing youtube-local-transcribe into .venv..."
+Write-Host "Installing video-to-notes into .venv..."
 & $VenvPython -m pip install --upgrade pip setuptools wheel
 & $VenvPython -m pip install -e .
 
@@ -105,15 +105,15 @@ Use this environment in the current PowerShell:
   .\.venv\Scripts\Activate.ps1
 
 Then configure language, Whisper fallback model, and output target:
-  ytlt configure
+  video-to-notes configure
 
 Or run it directly:
-  .\.venv\Scripts\ytlt.exe configure
+  .\.venv\Scripts\video-to-notes.exe configure
 "@
 
-if ($env:YTLT_SKIP_CONFIGURE -ne "1" -and [Environment]::UserInteractive) {
-    $answer = Read-Host "Run ytlt configure now? [Y/n]"
+if ($env:VIDEO_TO_NOTES_SKIP_CONFIGURE -ne "1" -and $env:YTLT_SKIP_CONFIGURE -ne "1" -and [Environment]::UserInteractive) {
+    $answer = Read-Host "Run video-to-notes configure now? [Y/n]"
     if ($answer -notin @("n", "N", "no", "NO", "No")) {
-        & $VenvYtlt configure
+        & $VenvCommand configure
     }
 }

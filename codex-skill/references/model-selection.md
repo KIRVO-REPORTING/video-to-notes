@@ -26,18 +26,18 @@ If the video has downloadable manual or automatic subtitles in a suitable langua
 Always start with:
 
 ```bash
-ytlt probe
-ytlt recommend
-ytlt setup --dry-run
+video-to-notes probe
+video-to-notes recommend
+video-to-notes setup --dry-run
 ```
 
 Run the plan only after checking it:
 
 ```bash
-ytlt setup --execute
+video-to-notes setup --execute
 ```
 
-`setup --execute` downloads the hardware-recommended model into `<workspace>/models` and writes `<workspace>/config.json`. `ytlt install --execute` remains a compatible alias for the same setup behavior.
+`setup --execute` downloads the hardware-recommended model into `<workspace>/models` and writes `<workspace>/config.json`. `video-to-notes install --execute` remains a compatible alias for the same setup behavior.
 
 For manual installs:
 
@@ -56,6 +56,6 @@ NVIDIA `large-v3-turbo` is a faster-whisper alias, not a workspace-cached Huggin
 Use explicit overrides only when the default recommendation is wrong or the user requests a different quality/speed tradeoff:
 
 ```bash
-ytlt process "VIDEO_URL" --force-transcribe --backend faster-whisper --model Systran/faster-whisper-medium --device cpu --compute-type int8
-ytlt process "VIDEO_URL" --force-transcribe --backend mlx --model mlx-community/whisper-large-v3-turbo
+video-to-notes process "VIDEO_URL" --force-transcribe --backend faster-whisper --model Systran/faster-whisper-medium --device cpu --compute-type int8
+video-to-notes process "VIDEO_URL" --force-transcribe --backend mlx --model mlx-community/whisper-large-v3-turbo
 ```

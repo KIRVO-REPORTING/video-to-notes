@@ -144,7 +144,7 @@ def make_video_folder(output_root: Path, metadata: dict[str, Any]) -> Path:
 
 def render_summary(text: str, source_url: str | None = None) -> str:
     if not text.strip():
-        return '<p class="muted">Summary pending. Write summary.md and run ytlt finalize.</p>'
+        return '<p class="muted">Summary pending. Write summary.md and run video-to-notes finalize.</p>'
 
     return _render_summary_lines(text.splitlines(), source_url)
 

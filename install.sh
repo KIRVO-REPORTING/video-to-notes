@@ -89,7 +89,7 @@ if [ ! -x "$VENV_PYTHON" ]; then
   exit 1
 fi
 
-echo "Installing youtube-local-transcribe into .venv..."
+echo "Installing video-to-notes into .venv..."
 "$VENV_PYTHON" -m pip install --upgrade pip setuptools wheel
 "$VENV_PYTHON" -m pip install -e .
 
@@ -101,19 +101,19 @@ Use this environment in the current shell:
   . .venv/bin/activate
 
 Then configure language, Whisper fallback model, and output target:
-  ytlt configure
+  video-to-notes configure
 
 Or run it directly:
-  .venv/bin/ytlt configure
+  .venv/bin/video-to-notes configure
 EOF
 
-if [ "${YTLT_SKIP_CONFIGURE:-0}" != "1" ]; then
+if [ "${VIDEO_TO_NOTES_SKIP_CONFIGURE:-${YTLT_SKIP_CONFIGURE:-0}}" != "1" ]; then
   if [ -t 0 ] && [ -t 1 ]; then
-    printf '\nRun ytlt configure now? [Y/n] '
+    printf '\nRun video-to-notes configure now? [Y/n] '
     IFS= read -r answer
     case "$answer" in
       n|N|no|NO|No) exit 0 ;;
-      *) .venv/bin/ytlt configure ;;
+      *) .venv/bin/video-to-notes configure ;;
     esac
   fi
 fi

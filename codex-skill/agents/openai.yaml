@@ -1,6 +1,6 @@
 interface:
-  display_name: "Video Report Builder"
-  short_description: "Build concise timestamped video reports"
-  default_prompt: "Use $youtube-local-transcribe for this video link: derive the real video title, rename the thread to the video topic when possible, respect the configured local/notion/obsidian output environment, prefer captions then local Whisper, write an answer-first summary with timestamped Key Points whose optional one-level nested bullets contain transcript-backed details, examples, numbers, or caveats, parallelizing long transcript drafting when useful, finalize and publish to the configured target when available, then answer with the title, summary, report link or path, key points, and caveats without verbose processing logs."
+  display_name: "Video to Notes"
+  short_description: "Turn video links into timestamped notes"
+  default_prompt: "Use $video-to-notes for this video link: prefer captions, write timestamped notes, finalize the report, publish to the configured target, and return the report path or URL."
 policy:
   allow_implicit_invocation: true

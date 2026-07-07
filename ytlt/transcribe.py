@@ -13,7 +13,7 @@ def download_model(model: str, target_dir: Path | None = None) -> Path | str:
     try:
         from huggingface_hub import snapshot_download
     except ImportError as exc:
-        raise RuntimeError("Install huggingface-hub or run ytlt install --execute first.") from exc
+        raise RuntimeError("Install huggingface-hub or run video-to-notes install --execute first.") from exc
 
     kwargs = {"repo_id": model}
     if target_dir:
@@ -84,7 +84,7 @@ def _transcribe_with_faster_whisper(
         from faster_whisper import WhisperModel
     except ImportError as exc:
         raise RuntimeError(
-            "faster-whisper is not installed. Run ytlt configure --model-choice recommended --execute, "
+            "faster-whisper is not installed. Run video-to-notes configure --model-choice recommended --execute, "
             "or run ./install.sh first if the project is not installed yet."
         ) from exc
 
@@ -132,7 +132,7 @@ def _transcribe_with_mlx(
         import mlx_whisper
     except ImportError as exc:
         raise RuntimeError(
-            "mlx-whisper is not installed. Run ytlt configure --model-choice recommended --execute, "
+            "mlx-whisper is not installed. Run video-to-notes configure --model-choice recommended --execute, "
             "or run ./install.sh first if the project is not installed yet."
         ) from exc
 

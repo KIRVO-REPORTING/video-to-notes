@@ -44,7 +44,7 @@ class ObsidianPublishingTests(unittest.TestCase):
             metadata = json.loads((folder / "metadata.json").read_text(encoding="utf-8"))
             self.assertEqual(metadata["obsidian_note_path"], str(note))
             self.assertEqual(metadata["obsidian_vault_path"], str(vault.resolve()))
-            self.assertEqual(metadata["obsidian_sync_method"], "ytlt_cli_vault")
+            self.assertEqual(metadata["obsidian_sync_method"], "video_to_notes_cli_vault")
 
     def test_publish_updates_existing_obsidian_note(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

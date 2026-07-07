@@ -95,7 +95,7 @@ def publish_report_to_obsidian(
         "obsidian_vault_path": str(vault),
         "obsidian_reports_dir": str(reports_dir.relative_to(vault)),
         "obsidian_synced_at": synced_at,
-        "obsidian_sync_method": "ytlt_cli_vault",
+        "obsidian_sync_method": "video_to_notes_cli_vault",
     }
     metadata.update({key: value for key, value in result.items() if value})
     (folder / "metadata.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -148,7 +148,7 @@ def report_markdown(
 
     frontmatter = _frontmatter(
         {
-            "ytlt_id": metadata.get("id"),
+            "video_to_notes_id": metadata.get("id"),
             "title": metadata.get("title") or folder.name,
             "platform": metadata.get("platform"),
             "source_url": source_url,
@@ -160,7 +160,7 @@ def report_markdown(
             "local_report": str(local_report),
             "local_folder": str(folder),
             "workspace": str(workspace) if workspace else None,
-            "tags": ["video-report", "ytlt", str(metadata.get("platform") or "video")],
+            "tags": ["video-report", "video-to-notes", str(metadata.get("platform") or "video")],
         }
     )
 

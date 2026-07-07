@@ -274,7 +274,7 @@ def process_url(args: argparse.Namespace) -> int:
     if not track and local_whisper_disabled(workspace):
         raise SystemExit(
             "No usable captions found and local Whisper fallback is disabled in config.json. "
-            "Run ytlt configure and choose the recommended Whisper model, or pass --no-transcribe-fallback intentionally."
+            "Run video-to-notes configure and choose the recommended Whisper model, or pass --no-transcribe-fallback intentionally."
         )
     transcript_source = track.source if track else "local_whisper"
     metadata = normalize_metadata(info, args.url, transcript_source=transcript_source)
@@ -533,13 +533,15 @@ def run_configure(args: argparse.Namespace) -> int:
 
 
 def _configured_next_steps(environment: str, model_choice: str) -> list[str]:
-    steps = ['Run ytlt process "VIDEO_URL" to create a local report.']
+    steps = ['Run video-to-notes process "VIDEO_URL" to create a local report.']
     if model_choice == "none":
-        steps.append("Videos without usable captions will fail unless you re-run ytlt configure and enable Whisper fallback.")
+        steps.append(
+            "Videos without usable captions will fail unless you re-run video-to-notes configure and enable Whisper fallback."
+        )
     if environment == "notion":
         steps.append(
             "If running inside an agent with a connected Notion connector/MCP, use that connector to create or reuse "
-            "the report database after ytlt finalize; no local Notion token is required for connector publishing."
+            "the report database after video-to-notes finalize; no local Notion token is required for connector publishing."
         )
         steps.append(
             "For CLI-only publishing, set NOTION_TOKEN and one Notion target: NOTION_DATA_SOURCE_ID, "
@@ -548,7 +550,7 @@ def _configured_next_steps(environment: str, model_choice: str) -> list[str]:
     elif environment == "obsidian":
         steps.append("Set OBSIDIAN_VAULT_PATH or pass --obsidian-vault before publishing.")
     else:
-        steps.append("Run ytlt serve --open to browse the local dashboard.")
+        steps.append("Run video-to-notes serve --open to browse the local dashboard.")
     return steps
 
 
@@ -657,7 +659,7 @@ def run_serve(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="ytlt", description="Caption-first local video transcription toolkit.")
+    parser = argparse.ArgumentParser(prog="video-to-notes", description="Turn video links into notes and reports.")
     sub = parser.add_subparsers(dest="command", required=True)
 
     probe_parser = sub.add_parser("probe", help="Inspect local machine specs.")

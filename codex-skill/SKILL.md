@@ -1,24 +1,24 @@
 ---
-name: youtube-local-transcribe
+name: video-to-notes
 description: Caption-first local video archiving, transcription, summarization, report generation, configurable local/Notion/Obsidian publishing, dashboard workflow, concise final answers, and video-topic thread titles for YouTube, youtu.be, Bilibili, b23.tv, BV, av, ep, ss, and other yt-dlp supported video URLs. Use when the user sends a bare video link or asks to download subtitles, transcribe locally, summarize a video, create notes, generate an HTML report, publish to Notion, publish to Obsidian, create or sync report databases/notes, open a local browser report, inspect past video reports, or serve a local report dashboard.
 ---
 
-# YouTube Local Transcribe
+# Video to Notes
 
-Use this workflow for bare video URLs and explicit video transcription, summary, archive, local report, Notion sync, Obsidian sync, or report requests. Prefer downloadable subtitles first; use local Whisper only when captions are missing, unsuitable, or the user forces transcription. Respect the user's `ytlt configure` output environment: `local`, `notion`, or `obsidian`.
+Use this workflow for bare video URLs and explicit video transcription, summary, archive, local report, Notion sync, Obsidian sync, or report requests. Prefer downloadable subtitles first; use local Whisper only when captions are missing, unsuitable, or the user forces transcription. Respect the user's `video-to-notes configure` output environment: `local`, `notion`, or `obsidian`.
 
 ## Current Artifact Workflow
 
 For bare video links, report requests, Notion sync requests, Obsidian sync requests, or the current clean report output, produce the configured artifact directly:
 
-1. Process the video with `ytlt process`, preferring captions and falling back to local Whisper only when needed.
+1. Process the video with `video-to-notes process`, preferring captions and falling back to local Whisper only when needed.
 2. Read `metadata.json` and `transcript.txt`; write `summary.md` with an answer-first overview and timestamped Key Points grounded in the transcript.
-3. Run `ytlt finalize "<video-folder>"` to refresh the local `report.html` and dashboard index.
+3. Run `video-to-notes finalize "<video-folder>"` to refresh the local `report.html` and dashboard index.
 4. Publish or update the configured target when applicable: Notion database row for `notion`, Obsidian note/dashboard for `obsidian`, or local dashboard only for `local`.
 5. Rename the current Codex thread to a concise video-topic title when a thread-title tool is available and the current thread id can be resolved.
 6. Return the primary reader-facing output for the configured target: Notion row URL, Obsidian note path/URI, or local `report.html` path.
 
-Do not assume Notion is always the desired destination. If `<workspace>/config.json` exists, use its configured `preferences.output_environment`. If it is missing and the user has not specified a destination, local output is acceptable, but suggest `ytlt configure` for persistent language/model/environment preferences.
+Do not assume Notion is always the desired destination. If `<workspace>/config.json` exists, use its configured `preferences.output_environment`. If it is missing and the user has not specified a destination, local output is acceptable, but suggest `video-to-notes configure` for persistent language/model/environment preferences.
 
 Keep user-facing progress and final responses focused on the video result. Avoid dumping download, transcode, caption conversion, test, command, codec, cleanup, or file-by-file process logs unless the user asks for that detail or the workflow fails.
 
@@ -33,7 +33,7 @@ The current Notion artifact is:
 
 ## Setup Check
 
-If `ytlt` is not installed and this repository is available, install from the repository root with the bootstrap script. The script checks for Python 3.9+, pip, and venv support, creates `.venv`, installs required Python packages, and then offers to run `ytlt configure`.
+If `video-to-notes` is not installed and this repository is available, install from the repository root with the bootstrap script. The script checks for Python 3.9+, pip, and venv support, creates `.venv`, installs required Python packages, and then offers to run `video-to-notes configure`.
 
 ```bash
 ./install.sh
@@ -50,58 +50,60 @@ If Python is missing, stop and follow the script's OS-specific Python installati
 For non-interactive agent setup, skip the installer prompt and then run configuration explicitly:
 
 ```bash
-YTLT_SKIP_CONFIGURE=1 ./install.sh
-.venv/bin/ytlt probe
-.venv/bin/ytlt configure
+VIDEO_TO_NOTES_SKIP_CONFIGURE=1 ./install.sh
+.venv/bin/video-to-notes probe
+.venv/bin/video-to-notes configure
 ```
 
 For Windows PowerShell non-interactive setup:
 
 ```powershell
-$env:YTLT_SKIP_CONFIGURE = "1"
+$env:VIDEO_TO_NOTES_SKIP_CONFIGURE = "1"
 powershell -ExecutionPolicy Bypass -File .\install.ps1
-.\.venv\Scripts\ytlt.exe probe
-.\.venv\Scripts\ytlt.exe configure
+.\.venv\Scripts\video-to-notes.exe probe
+.\.venv\Scripts\video-to-notes.exe configure
 ```
 
-If `ytlt` is already on PATH, run:
+The installer also accepts the legacy `YTLT_SKIP_CONFIGURE=1` variable for compatibility.
+
+If `video-to-notes` is already on PATH, run:
 
 ```bash
-ytlt probe
-ytlt configure
+video-to-notes probe
+video-to-notes configure
 ```
 
-`ytlt configure` asks for the user's usual language, local Whisper fallback model choice, and output environment. The recommended model is based on the detected hardware. Choosing no model is allowed but not recommended because videos without usable captions cannot fall back to local transcription.
+`video-to-notes configure` asks for the user's usual language, local Whisper fallback model choice, and output environment. The recommended model is based on the detected hardware. Choosing no model is allowed but not recommended because videos without usable captions cannot fall back to local transcription.
 
 Non-interactive examples:
 
 ```bash
-ytlt configure --language zh --model-choice recommended --environment local --execute
-ytlt configure --language zh --model-choice recommended --environment notion --execute
-ytlt configure --language zh --model-choice recommended --environment obsidian --execute
-ytlt configure --language zh --model-choice none --environment local
+video-to-notes configure --language zh --model-choice recommended --environment local --execute
+video-to-notes configure --language zh --model-choice recommended --environment notion --execute
+video-to-notes configure --language zh --model-choice recommended --environment obsidian --execute
+video-to-notes configure --language zh --model-choice none --environment local
 ```
 
-`--execute` installs the matching backend plus `imageio-ffmpeg`, verifies ffmpeg, downloads or configures the selected model when needed, and writes `<workspace>/config.json`. `ytlt setup --execute` remains available for model-only setup. When deciding what model or backend to install, read `references/model-selection.md`.
+`--execute` installs the matching backend plus `imageio-ffmpeg`, verifies ffmpeg, downloads or configures the selected model when needed, and writes `<workspace>/config.json`. `video-to-notes setup --execute` remains available for model-only setup. When deciding what model or backend to install, read `references/model-selection.md`.
 
 ## Process One Video
 
 Run:
 
 ```bash
-ytlt process "VIDEO_URL"
+video-to-notes process "VIDEO_URL"
 ```
 
 Useful options:
 
 ```bash
-ytlt process "VIDEO_URL" --language zh
-ytlt process "VIDEO_URL" --cookies-from-browser chrome
-ytlt process "VIDEO_URL" --force-transcribe
-ytlt process "VIDEO_URL" --open
-ytlt process "VIDEO_URL" --publish-notion
-ytlt process "VIDEO_URL" --publish-obsidian
-ytlt process "VIDEO_URL" --environment local
+video-to-notes process "VIDEO_URL" --language zh
+video-to-notes process "VIDEO_URL" --cookies-from-browser chrome
+video-to-notes process "VIDEO_URL" --force-transcribe
+video-to-notes process "VIDEO_URL" --open
+video-to-notes process "VIDEO_URL" --publish-notion
+video-to-notes process "VIDEO_URL" --publish-obsidian
+video-to-notes process "VIDEO_URL" --environment local
 ```
 
 The processor creates a per-video folder under `<workspace>/processed/`, writes `metadata.json`, `transcript.txt`, and `report.html`, and updates `index.json` plus `dashboard.html`.
@@ -143,14 +145,14 @@ For long videos, consider parallel drafting after reading the full transcript on
 Finalize:
 
 ```bash
-ytlt finalize "<video-folder>"
+video-to-notes finalize "<video-folder>"
 ```
 
 Finalization re-renders `report.html`, deletes any retained downloaded `video.*` media file, and refreshes the dashboard index. Continue into the configured output target before responding. Use `--environment local`, `--environment notion`, or `--environment obsidian` to override the configured destination for one run.
 
 ## Notion Publishing
 
-Use Notion publishing when the user asks for Notion, passes `--publish-notion`, or configured `ytlt configure --environment notion`. If a Notion connector/MCP/app is connected in the current agent environment, prefer that path for setup and publishing: create or reuse the report database through the connector, write the report row through the connector after `ytlt finalize`, and do not require local `NOTION_TOKEN`. Skip Notion only when the user explicitly asks for local-only output, the environment has neither CLI Notion credentials nor a connected Notion app/MCP, or publishing fails after a reasonable retry. If skipped or blocked, state the reason in the final response and still return the local report path.
+Use Notion publishing when the user asks for Notion, passes `--publish-notion`, or configured `video-to-notes configure --environment notion`. If a Notion connector/MCP/app is connected in the current agent environment, prefer that path for setup and publishing: create or reuse the report database through the connector, write the report row through the connector after `video-to-notes finalize`, and do not require local `NOTION_TOKEN`. Skip Notion only when the user explicitly asks for local-only output, the environment has neither CLI Notion credentials nor a connected Notion app/MCP, or publishing fails after a reasonable retry. If skipped or blocked, state the reason in the final response and still return the local report path.
 
 For CLI-based publishing, the required environment is:
 
@@ -171,19 +173,19 @@ Prefer `NOTION_DATA_SOURCE_ID` for a Notion database/data-source dashboard. Use 
 When CLI credentials and a target are available, publish during finalization or publish the already processed folder:
 
 ```bash
-ytlt finalize "<video-folder>" --publish-notion
-ytlt publish-notion "<video-folder>"
+video-to-notes finalize "<video-folder>" --publish-notion
+video-to-notes publish-notion "<video-folder>"
 ```
 
 When Notion publishing succeeds, the JSON output includes `notion.notion_url`. Include that link in the final response alongside the local dashboard link. The publisher stores `notion_page_id`, `notion_url`, and `notion_synced_at` in `metadata.json`; later publishes update the same Notion page.
 
-When running in Codex, ChatGPT, or another agent with a connected Notion app/MCP but no `NOTION_TOKEN`, use the connector after `ytlt finalize`. Use the clean Notion database layout below. Do not claim the CLI wrote to Notion unless `--publish-notion` or `ytlt publish-notion` was used.
+When running in Codex, ChatGPT, or another agent with a connected Notion app/MCP but no `NOTION_TOKEN`, use the connector after `video-to-notes finalize`. Use the clean Notion database layout below. Do not claim the CLI wrote to Notion unless `--publish-notion` or `video-to-notes publish-notion` was used.
 
 Connector/MCP setup path:
 
 1. Ask the connector/MCP to search for an existing report workspace/page/database named `本地视频报告数据库` or a user-specified target.
 2. If no suitable target exists, create a clean parent page and database using the schema below.
-3. After `ytlt finalize`, read `metadata.json`, `summary.md`, `transcript.txt`, and local `report.html`.
+3. After `video-to-notes finalize`, read `metadata.json`, `summary.md`, `transcript.txt`, and local `report.html`.
 4. Create or update exactly one database row for the report; the row opened from `Name` is the report body.
 5. Write connector-created Notion IDs/URLs back to `metadata.json` when local file editing is available. Use the same metadata field names as CLI publishing where possible: `notion_page_id`, `notion_url`, `notion_database_id`, `notion_database_url`, `notion_data_source_id`, and `notion_synced_at`.
 
@@ -263,7 +265,7 @@ After syncing, write the following fields back to each relevant `metadata.json` 
 
 ## Obsidian Publishing
 
-Use Obsidian publishing when the user asks for Obsidian, passes `--publish-obsidian`, or configured `ytlt configure --environment obsidian`.
+Use Obsidian publishing when the user asks for Obsidian, passes `--publish-obsidian`, or configured `video-to-notes configure --environment obsidian`.
 
 For CLI-based publishing, set the vault path:
 
@@ -281,9 +283,9 @@ export OBSIDIAN_INDEX_NOTE="Video Reports Dashboard.md"
 Publish during finalization, publish an already processed folder, or sync a workspace:
 
 ```bash
-ytlt finalize "<video-folder>" --publish-obsidian
-ytlt publish-obsidian "<video-folder>"
-ytlt sync-obsidian
+video-to-notes finalize "<video-folder>" --publish-obsidian
+video-to-notes publish-obsidian "<video-folder>"
+video-to-notes sync-obsidian
 ```
 
 The Obsidian publisher creates or updates one Markdown note per report and maintains a dashboard note. It writes YAML frontmatter, source metadata, timestamp-linked summary sections, local report path, and the transcript unless `--obsidian-no-transcript` is used.
@@ -292,7 +294,7 @@ When Obsidian publishing succeeds, the JSON output includes `obsidian.obsidian_n
 
 ## Thread Title And Final Response
 
-After reading `metadata.json`, derive the user-facing title from the source video's real title. If it is too long, trim it to a concise topic title of about 45-60 characters. Do not name the thread with generic workflow words such as `transcribe`, `caption`, `download`, or `youtube-local-transcribe`.
+After reading `metadata.json`, derive the user-facing title from the source video's real title. If it is too long, trim it to a concise topic title of about 45-60 characters. Do not name the thread with generic workflow words such as `transcribe`, `caption`, `download`, or `video-to-notes`.
 
 When a Codex thread-management tool is available and the current thread id can be resolved, rename the current thread to that concise video-topic title before the final response. If the thread id cannot be resolved, continue without blocking the report.
 
@@ -322,11 +324,11 @@ Keep this response compact. Include conversion/process details only when they ch
 Open or serve previous reports:
 
 ```bash
-ytlt rebuild-index
-ytlt serve --open
+video-to-notes rebuild-index
+video-to-notes serve --open
 ```
 
-`ytlt serve` binds to `127.0.0.1` by default and opens a local dashboard of past reports. Do not expose the server publicly unless the user explicitly asks.
+`video-to-notes serve` binds to `127.0.0.1` by default and opens a local dashboard of past reports. Do not expose the server publicly unless the user explicitly asks.
 
 ## Output Contract
 

@@ -129,7 +129,7 @@ def download_caption(track: CaptionTrack, target_dir: Path) -> Path:
 
 
 def _fetch_url(url: str) -> bytes:
-    request = urllib.request.Request(url, headers={"User-Agent": "ytlt/0.1"})
+    request = urllib.request.Request(url, headers={"User-Agent": "video-to-notes/0.1"})
     with urllib.request.urlopen(request, timeout=60) as response:
         return response.read()
 
