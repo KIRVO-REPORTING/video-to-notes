@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "youtube-local-transcribe"
+version = "0.1.0"
+description = "Caption-first local video transcription, report generation, and dashboard tooling."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+  "yt-dlp>=2025.1.0",
+  "imageio-ffmpeg>=0.5.0",
+]
+
+[project.optional-dependencies]
+faster-whisper = [
+  "faster-whisper>=1.1.0",
+  "huggingface-hub>=0.24.0",
+  "imageio-ffmpeg>=0.5.0",
+]
+mlx = [
+  "mlx-whisper>=0.4.0",
+  "huggingface-hub>=0.24.0",
+]
+all = [
+  "faster-whisper>=1.1.0",
+  "huggingface-hub>=0.24.0",
+  "imageio-ffmpeg>=0.5.0",
+  "mlx-whisper>=0.4.0",
+]
+
+[project.scripts]
+ytlt = "ytlt.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["ytlt*"]

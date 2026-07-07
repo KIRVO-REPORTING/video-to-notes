@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Local environments
+.venv/
+venv/
+.env
+*.env
+
+# User data, generated reports, downloaded media, and models
+processed/
+.test-workspace/
+youtube/
+models/
+local-report-archive/
+*.mp4
+*.mkv
+*.webm
+*.mov
+*.m4v
+*.mp3
+*.wav
+*.m4a
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
