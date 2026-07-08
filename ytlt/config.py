@@ -43,6 +43,7 @@ def write_config(
     preferred_language: str | None = None,
     output_environment: str = "local",
     whisper_model_mode: str = "recommended",
+    obsidian: dict[str, Any] | None = None,
 ) -> Path:
     workspace.mkdir(parents=True, exist_ok=True)
     payload = {
@@ -67,6 +68,12 @@ def write_config(
             "fallback_enabled": whisper_model_mode != "none",
         },
     }
+    if obsidian:
+        payload["obsidian"] = {
+            key: str(value) if isinstance(value, Path) else value
+            for key, value in obsidian.items()
+            if value not in (None, "")
+        }
     path = config_path(workspace)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return path

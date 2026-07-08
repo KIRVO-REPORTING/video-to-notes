@@ -281,6 +281,36 @@ class SetupTests(unittest.TestCase):
             self.assertIn("Notion connector/MCP", next_steps)
             self.assertIn("NOTION_TOKEN", next_steps)
 
+    def test_configure_obsidian_records_auto_discovered_vault(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            workspace = root / "workspace"
+            vault = root / "vault"
+            (vault / ".obsidian").mkdir(parents=True)
+            args = argparse.Namespace(
+                workspace=str(workspace),
+                language="zh",
+                environment="obsidian",
+                obsidian_vault=None,
+                model_choice="none",
+                model=None,
+                execute=False,
+                dry_run=False,
+            )
+
+            with (
+                patch("ytlt.cli.probe", return_value=_spec(workspace)),
+                patch("ytlt.cli.discover_obsidian_vaults", return_value=[vault.resolve()]),
+                contextlib.redirect_stdout(io.StringIO()) as out,
+            ):
+                self.assertEqual(run_configure(args), 0)
+
+            payload = json.loads(out.getvalue())
+            config = json.loads((workspace / "config.json").read_text(encoding="utf-8"))
+            self.assertEqual(payload["obsidian"]["vault_path"], str(vault.resolve()))
+            self.assertEqual(config["obsidian"]["vault_path"], str(vault.resolve()))
+            self.assertIn("Obsidian vault is configured", "\n".join(payload["next_steps"]))
+
 
 if __name__ == "__main__":
     unittest.main()

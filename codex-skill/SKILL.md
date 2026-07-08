@@ -267,10 +267,11 @@ After syncing, write the following fields back to each relevant `metadata.json` 
 
 Use Obsidian publishing when the user asks for Obsidian, passes `--publish-obsidian`, or configured `video-to-notes configure --environment obsidian`.
 
-For CLI-based publishing, set the vault path:
+For CLI-based publishing, `video-to-notes configure --environment obsidian` automatically detects the user's local vault from Obsidian app state or common `.obsidian` folders and stores it in `<workspace>/config.json`. If auto-detection fails or the user wants a different vault, set or pass the vault path:
 
 ```bash
 export OBSIDIAN_VAULT_PATH="/path/to/your/vault"
+video-to-notes configure --environment obsidian --obsidian-vault "/path/to/your/vault"
 ```
 
 Optional settings:
@@ -288,7 +289,7 @@ video-to-notes publish-obsidian "<video-folder>"
 video-to-notes sync-obsidian
 ```
 
-The Obsidian publisher creates or updates one Markdown note per report and maintains a dashboard note. It writes YAML frontmatter, source metadata, timestamp-linked summary sections, local report path, and the transcript unless `--obsidian-no-transcript` is used.
+The Obsidian publisher creates or updates one Markdown note per report, names new notes with the video title first, and maintains a dashboard note. It writes YAML frontmatter, a video-title alias, source metadata, content tags generated from the title, summary, and transcript, timestamp-linked summary sections, local report path, and the transcript unless `--obsidian-no-transcript` is used.
 
 When Obsidian publishing succeeds, the JSON output includes `obsidian.obsidian_note_path`, `obsidian.obsidian_note_uri`, and `obsidian.obsidian_index_note_path`. Include the note path or URI in the final response alongside the local report path. The publisher stores `obsidian_note_path`, `obsidian_vault_path`, `obsidian_synced_at`, and `obsidian_sync_method` in `metadata.json`; later publishes update the same note.
 

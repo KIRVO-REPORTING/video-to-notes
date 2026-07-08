@@ -81,6 +81,12 @@ video-to-notes configure
 2. 本地 Whisper fallback 模型。默认推荐项会根据当前硬件选择；也可以选择 `none` 不安装模型，但不推荐，因为无字幕视频将无法本地转写。
 3. 默认输出环境：`local`、`notion` 或 `obsidian`。
 
+选择 `obsidian` 时，配置会优先读取 Obsidian 本地应用配置里的 vault 列表，找不到时再搜索常见目录中的 `.obsidian` 文件夹，并把发现的 vault 写入 workspace 配置。也可以显式指定：
+
+```bash
+video-to-notes configure --language zh --model-choice recommended --environment obsidian --obsidian-vault "/path/to/your/vault"
+```
+
 也可以用非交互方式配置：
 
 ```bash
@@ -228,10 +234,12 @@ video-to-notes publish-notion "/path/to/processed/video-folder"
 
 ### 发布到 Obsidian
 
-设置 Obsidian vault 路径：
+如果已经通过 `video-to-notes configure --environment obsidian` 发现并保存了 vault，后续发布会自动使用该配置。也可以临时覆盖 Obsidian vault 路径：
 
 ```bash
 export OBSIDIAN_VAULT_PATH="/path/to/your/vault"
+# 或
+video-to-notes publish-obsidian "/path/to/processed/video-folder" --obsidian-vault "/path/to/your/vault"
 ```
 
 可选配置：
@@ -254,7 +262,7 @@ video-to-notes publish-obsidian "/path/to/processed/video-folder"
 video-to-notes sync-obsidian
 ```
 
-Obsidian 发布会在 vault 中创建或更新一篇 Markdown 报告，并维护一个 dashboard note。报告包含 YAML frontmatter、视频元数据、摘要、时间戳链接、本地报告路径和可选全文 transcript。
+Obsidian 发布会在 vault 中创建或更新一篇以视频标题开头命名的 Markdown 报告，并维护一个 dashboard note。报告包含 YAML frontmatter、视频标题 alias、视频元数据、根据标题/摘要/transcript 生成的内容 tags、摘要、时间戳链接、本地报告路径和可选全文 transcript。
 
 ### 本地开发
 
@@ -349,6 +357,12 @@ The wizard asks for:
 1. Usual language, such as `zh`, `en`, or `ja`.
 2. Local Whisper fallback model. The default recommendation is based on detected hardware. Choosing `none` is allowed but not recommended because captionless videos cannot be transcribed locally.
 3. Default output environment: `local`, `notion`, or `obsidian`.
+
+When `obsidian` is selected, configuration first reads Obsidian's local app vault list, then falls back to searching common folders for `.obsidian`, and saves the detected vault in the workspace config. You can also override it explicitly:
+
+```bash
+video-to-notes configure --language en --model-choice recommended --environment obsidian --obsidian-vault "/path/to/your/vault"
+```
 
 Non-interactive examples:
 
@@ -497,10 +511,12 @@ In an agent environment with no CLI token but with a Notion connector/MCP, the f
 
 ### Publish to Obsidian
 
-Set your Obsidian vault path:
+If `video-to-notes configure --environment obsidian` already detected and saved a vault, publishing uses that saved config automatically. You can still override the vault temporarily:
 
 ```bash
 export OBSIDIAN_VAULT_PATH="/path/to/your/vault"
+# or
+video-to-notes publish-obsidian "/path/to/processed/video-folder" --obsidian-vault "/path/to/your/vault"
 ```
 
 Optional settings:
@@ -523,7 +539,7 @@ Sync the whole workspace:
 video-to-notes sync-obsidian
 ```
 
-Obsidian publishing creates or updates a Markdown report note in the vault and maintains a dashboard note. Each report includes YAML frontmatter, video metadata, summary, timestamp links, local report path, and an optional full transcript.
+Obsidian publishing creates or updates a Markdown report note named with the video title first and maintains a dashboard note. Each report includes YAML frontmatter, a video-title alias, video metadata, content tags generated from the title, summary, and transcript, summary, timestamp links, local report path, and an optional full transcript.
 
 ### Local development
 

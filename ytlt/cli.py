@@ -26,7 +26,15 @@ from .config import (
 )
 from .ffmpeg import resolve_ffmpeg_path
 from .notion import NotionError, NotionPublishConfig, publish_report_to_notion
-from .obsidian import ObsidianError, ObsidianPublishConfig, publish_report_to_obsidian, sync_workspace_to_obsidian
+from .obsidian import (
+    DEFAULT_INDEX_NOTE,
+    DEFAULT_REPORTS_DIR,
+    ObsidianError,
+    ObsidianPublishConfig,
+    discover_obsidian_vaults,
+    publish_report_to_obsidian,
+    sync_workspace_to_obsidian,
+)
 from .reporting import (
     SUMMARY_FILENAME,
     delete_video_files,
@@ -166,13 +174,14 @@ def _notion_config(args: argparse.Namespace) -> NotionPublishConfig:
         raise SystemExit(str(exc)) from exc
 
 
-def _obsidian_config(args: argparse.Namespace) -> ObsidianPublishConfig:
+def _obsidian_config(args: argparse.Namespace, workspace: Path | None = None) -> ObsidianPublishConfig:
     try:
         return ObsidianPublishConfig.from_values(
             vault_path=args.obsidian_vault,
             reports_dir=args.obsidian_reports_dir,
             index_note=args.obsidian_index_note,
             include_transcript=not getattr(args, "obsidian_no_transcript", False),
+            workspace=workspace,
         )
     except ObsidianError as exc:
         raise SystemExit(str(exc)) from exc
@@ -191,7 +200,7 @@ def _publish_folder_to_notion(folder: Path, workspace: Path, args: argparse.Name
 
 def _publish_folder_to_obsidian(folder: Path, workspace: Path, args: argparse.Namespace) -> dict[str, Any]:
     try:
-        return publish_report_to_obsidian(folder, _obsidian_config(args), workspace=workspace)
+        return publish_report_to_obsidian(folder, _obsidian_config(args, workspace), workspace=workspace)
     except ObsidianError as exc:
         raise SystemExit(str(exc)) from exc
 
@@ -418,7 +427,7 @@ def run_sync_obsidian(args: argparse.Namespace) -> int:
     try:
         result = sync_workspace_to_obsidian(
             workspace,
-            _obsidian_config(args),
+            _obsidian_config(args, workspace),
             include_tests=getattr(args, "include_tests", False),
         )
     except ObsidianError as exc:
@@ -503,8 +512,15 @@ def run_configure(args: argparse.Namespace) -> int:
         "commands": commands,
         "execute": execute,
         "dry_run": args.dry_run,
-        "next_steps": _configured_next_steps(environment, model_choice),
     }
+    obsidian_settings = _configure_obsidian_settings(args, environment)
+    if obsidian_settings:
+        payload["obsidian"] = obsidian_settings
+    payload["next_steps"] = _configured_next_steps(
+        environment,
+        model_choice,
+        obsidian_settings.get("vault_path"),
+    )
     if args.dry_run:
         print(to_json(payload), end="")
         return 0
@@ -525,6 +541,7 @@ def run_configure(args: argparse.Namespace) -> int:
         preferred_language=language,
         output_environment=environment,
         whisper_model_mode=model_choice,
+        obsidian=obsidian_settings,
     )
     payload["configured"] = str(written)
     payload["model_path"] = str(model_path) if model_path else None
@@ -532,7 +549,31 @@ def run_configure(args: argparse.Namespace) -> int:
     return 0
 
 
-def _configured_next_steps(environment: str, model_choice: str) -> list[str]:
+def _configure_obsidian_settings(args: argparse.Namespace, environment: str) -> dict[str, Any]:
+    if environment != "obsidian":
+        return {}
+    explicit_vault = getattr(args, "obsidian_vault", None)
+    if explicit_vault:
+        vault_path = Path(explicit_vault).expanduser().resolve()
+        return {
+            "vault_path": str(vault_path),
+            "reports_dir": DEFAULT_REPORTS_DIR,
+            "index_note": DEFAULT_INDEX_NOTE,
+            "vault_source": "explicit",
+        }
+    vaults = discover_obsidian_vaults()
+    if not vaults:
+        return {}
+    return {
+        "vault_path": str(vaults[0]),
+        "reports_dir": DEFAULT_REPORTS_DIR,
+        "index_note": DEFAULT_INDEX_NOTE,
+        "vault_source": "auto",
+        "vault_candidates": [str(path) for path in vaults],
+    }
+
+
+def _configured_next_steps(environment: str, model_choice: str, obsidian_vault: str | None = None) -> list[str]:
     steps = ['Run video-to-notes process "VIDEO_URL" to create a local report.']
     if model_choice == "none":
         steps.append(
@@ -548,7 +589,13 @@ def _configured_next_steps(environment: str, model_choice: str) -> list[str]:
             "NOTION_DATABASE_ID, or NOTION_PARENT_PAGE_ID."
         )
     elif environment == "obsidian":
-        steps.append("Set OBSIDIAN_VAULT_PATH or pass --obsidian-vault before publishing.")
+        if obsidian_vault:
+            steps.append(f"Obsidian vault is configured: {obsidian_vault}")
+        else:
+            steps.append(
+                "No local Obsidian vault was found automatically. Set OBSIDIAN_VAULT_PATH or pass --obsidian-vault "
+                "before publishing."
+            )
     else:
         steps.append("Run video-to-notes serve --open to browse the local dashboard.")
     return steps
@@ -677,6 +724,10 @@ def build_parser() -> argparse.ArgumentParser:
     configure_parser.add_argument("--workspace")
     configure_parser.add_argument("--language", help="Usual transcript/report language, for example zh, en, or ja.")
     configure_parser.add_argument("--environment", choices=sorted(OUTPUT_ENVIRONMENTS))
+    configure_parser.add_argument(
+        "--obsidian-vault",
+        help="Override automatic Obsidian vault discovery when --environment obsidian is used.",
+    )
     configure_parser.add_argument(
         "--model-choice",
         choices=["recommended", "none"],

@@ -6,7 +6,12 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from ytlt.obsidian import ObsidianPublishConfig, publish_report_to_obsidian, sync_workspace_to_obsidian
+from ytlt.obsidian import (
+    ObsidianPublishConfig,
+    discover_obsidian_vaults,
+    publish_report_to_obsidian,
+    sync_workspace_to_obsidian,
+)
 
 
 class ObsidianPublishingTests(unittest.TestCase):
@@ -16,6 +21,49 @@ class ObsidianPublishingTests(unittest.TestCase):
 
         self.assertEqual(config.vault_path, Path(tmp).resolve())
         self.assertEqual(config.reports_dir, "Reports")
+
+    def test_workspace_configured_vault_is_used_without_environment(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {}, clear=True):
+            root = Path(tmp)
+            workspace = root / "workspace"
+            vault = root / "vault"
+            (vault / ".obsidian").mkdir(parents=True)
+            workspace.mkdir()
+            (workspace / "config.json").write_text(
+                json.dumps({"obsidian": {"vault_path": str(vault), "reports_dir": "Reports"}}),
+                encoding="utf-8",
+            )
+
+            with patch("ytlt.obsidian.detect_obsidian_vault", return_value=None):
+                config = ObsidianPublishConfig.from_values(workspace=workspace)
+
+        self.assertEqual(config.vault_path, vault.resolve())
+        self.assertEqual(config.reports_dir, "Reports")
+
+    def test_discovers_recent_obsidian_vault_from_app_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {}, clear=True):
+            home = Path(tmp)
+            old_vault = home / "Old Vault"
+            new_vault = home / "New Vault"
+            (old_vault / ".obsidian").mkdir(parents=True)
+            (new_vault / ".obsidian").mkdir(parents=True)
+            state_dir = home / "Library" / "Application Support" / "obsidian"
+            state_dir.mkdir(parents=True)
+            (state_dir / "obsidian.json").write_text(
+                json.dumps(
+                    {
+                        "vaults": {
+                            "old": {"path": str(old_vault), "ts": 1},
+                            "new": {"path": str(new_vault), "ts": 2, "open": True},
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            vaults = discover_obsidian_vaults(home)
+
+        self.assertEqual(vaults, [new_vault.resolve(), old_vault.resolve()])
 
     def test_publish_creates_note_index_and_records_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -36,7 +84,10 @@ class ObsidianPublishingTests(unittest.TestCase):
             note_text = note.read_text(encoding="utf-8")
             self.assertTrue(note.exists())
             self.assertTrue(index.exists())
+            self.assertTrue(note.name.startswith("Video Title - "))
             self.assertIn("# Video Title", note_text)
+            self.assertIn("aliases:", note_text)
+            self.assertIn('  - "Video Title"', note_text)
             self.assertIn("## Segment Conclusions", note_text)
             self.assertIn("[01:24-02:44](https://example.test/watch?v=abc&t=84)", note_text)
             self.assertIn("[[Video Reports/", index.read_text(encoding="utf-8"))
@@ -45,6 +96,27 @@ class ObsidianPublishingTests(unittest.TestCase):
             self.assertEqual(metadata["obsidian_note_path"], str(note))
             self.assertEqual(metadata["obsidian_vault_path"], str(vault.resolve()))
             self.assertEqual(metadata["obsidian_sync_method"], "video_to_notes_cli_vault")
+
+    def test_publish_generates_content_tags_from_summary_and_transcript(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            folder = root / "workspace" / "processed" / "video"
+            folder.mkdir(parents=True)
+            self._write_report_files(folder, extra_metadata={"title": "AI Safety Roadmap"})
+            (folder / "summary.md").write_text(
+                "Summary\n\nThis video covers reinforcement learning, AI safety, model evaluation, and governance.\n",
+                encoding="utf-8",
+            )
+            (folder / "transcript.txt").write_text(
+                "The talk compares reinforcement learning systems with AI safety review practices.",
+                encoding="utf-8",
+            )
+
+            result = publish_report_to_obsidian(folder, ObsidianPublishConfig(vault_path=root / "vault"))
+            note_text = Path(result["obsidian_note_path"]).read_text(encoding="utf-8")
+
+        self.assertIn('  - "ai-safety"', note_text)
+        self.assertIn('  - "reinforcement-learning"', note_text)
 
     def test_publish_updates_existing_obsidian_note(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
