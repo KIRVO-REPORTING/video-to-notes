@@ -27,6 +27,11 @@ local-report-archive/
 *.wav
 *.m4a
 
+# README media assets
+!docs/
+!docs/assets/
+!docs/assets/*.mp4
+
 # OS/editor
 .DS_Store
 Thumbs.db

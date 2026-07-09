@@ -13,6 +13,16 @@ Caption first. Local Whisper when needed. Searchable local reports. Optional Not
 
 `video-to-notes` 是一个面向 AI Coding Agent 和命令行用户的视频资料整理工具。它会优先下载视频自带字幕，在没有合适字幕时才使用本地 Whisper 转写，并把每个视频整理成可追溯的本地报告。
 
+<p align="center">
+  <a href="docs/assets/video-to-notes-intro-zh.mp4">
+    <img src="docs/assets/video-to-notes-intro-zh-poster.jpg" alt="video-to-notes 中文介绍视频" width="100%">
+  </a>
+</p>
+
+<p align="center">
+  <a href="docs/assets/video-to-notes-intro-zh.mp4">观看中文版介绍视频</a>
+</p>
+
 这个仓库包含两部分：
 
 - `video-to-notes`: Python CLI，负责环境检测、用户配置、字幕下载、本地 Whisper fallback、报告生成、Notion/Obsidian 发布和本地 dashboard。
@@ -286,6 +296,16 @@ video-to-notes process "https://www.ted.com/talks/sir_ken_robinson_do_schools_ki
 ### What this project does
 
 `video-to-notes` is a video knowledge capture workflow for AI coding agents and command-line users. It prefers existing captions, falls back to local Whisper only when captions are missing or unsuitable, and turns each video into a traceable local report.
+
+<p align="center">
+  <a href="docs/assets/video-to-notes-intro-en.mp4">
+    <img src="docs/assets/video-to-notes-intro-en-poster.jpg" alt="video-to-notes English intro video" width="100%">
+  </a>
+</p>
+
+<p align="center">
+  <a href="docs/assets/video-to-notes-intro-en.mp4">Watch the English intro video</a>
+</p>
 
 This repository contains:
 
