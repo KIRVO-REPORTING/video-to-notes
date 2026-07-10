@@ -13,15 +13,9 @@ Caption first. Local Whisper when needed. Searchable local reports. Optional Not
 
 `video-to-notes` 是一个面向 AI Coding Agent 和命令行用户的视频资料整理工具。它会优先下载视频自带字幕，在没有合适字幕时才使用本地 Whisper 转写，并把每个视频整理成可追溯的本地报告。
 
-<p align="center">
-  <a href="https://github.com/KIRVO-REPORTING/video-to-notes/blob/main/docs/assets/video-to-notes-intro-zh.mp4">
-    <img src="docs/assets/video-to-notes-intro-zh-poster.jpg" alt="video-to-notes 中文介绍视频" width="100%">
-  </a>
-</p>
+https://github.com/user-attachments/assets/3605df08-c558-4060-ae46-48d93420736c
 
 <p align="center">
-  <a href="https://github.com/KIRVO-REPORTING/video-to-notes/blob/main/docs/assets/video-to-notes-intro-zh.mp4">观看中文版介绍视频</a>
-  ·
   <a href="https://kirvo-reporting.github.io/video-to-notes/#zh">GitHub Pages 播放页</a>
   ·
   <a href="https://raw.githubusercontent.com/KIRVO-REPORTING/video-to-notes/main/docs/assets/video-to-notes-intro-zh.mp4">直接下载 MP4</a>
@@ -301,15 +295,9 @@ video-to-notes process "https://www.ted.com/talks/sir_ken_robinson_do_schools_ki
 
 `video-to-notes` is a video knowledge capture workflow for AI coding agents and command-line users. It prefers existing captions, falls back to local Whisper only when captions are missing or unsuitable, and turns each video into a traceable local report.
 
-<p align="center">
-  <a href="https://github.com/KIRVO-REPORTING/video-to-notes/blob/main/docs/assets/video-to-notes-intro-en.mp4">
-    <img src="docs/assets/video-to-notes-intro-en-poster.jpg" alt="video-to-notes English intro video" width="100%">
-  </a>
-</p>
+https://github.com/user-attachments/assets/b592828d-c849-46c8-9704-c2b9e52dc43c
 
 <p align="center">
-  <a href="https://github.com/KIRVO-REPORTING/video-to-notes/blob/main/docs/assets/video-to-notes-intro-en.mp4">Watch the English intro video</a>
-  ·
   <a href="https://kirvo-reporting.github.io/video-to-notes/#en">GitHub Pages player</a>
   ·
   <a href="https://raw.githubusercontent.com/KIRVO-REPORTING/video-to-notes/main/docs/assets/video-to-notes-intro-en.mp4">Download MP4</a>
