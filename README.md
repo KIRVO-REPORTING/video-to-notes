@@ -4,10 +4,6 @@ Caption first. Local Whisper when needed. Searchable local reports. Optional Not
 
 `video-to-notes` turns YouTube, Bilibili, TED, and other `yt-dlp` supported video URLs into local transcripts, grounded summaries, browser-readable HTML reports, and optional Notion or Obsidian knowledge-base entries.
 
-**实际 Notion 示例 / Live Notion demo:** [查看公开视频笔记数据库](https://equal-colby-a69.notion.site/edff5673d33e412da6c00721d97cebca?v=39c2cd5ac3058131b4cf000c0b03307d)
-
-[![video-to-notes 公开 Notion 示例数据库](docs/assets/notion-public-demo.png)](https://equal-colby-a69.notion.site/edff5673d33e412da6c00721d97cebca?v=39c2cd5ac3058131b4cf000c0b03307d)
-
 - [中文说明](#中文说明)
 - [English](#english)
 
@@ -42,6 +38,12 @@ https://github.com/user-attachments/assets/3605df08-c558-4060-ae46-48d93420736c
 - 处理过的视频缺少统一索引，时间久了很难找到以前的报告。
 
 这个项目把流程固定下来：字幕优先，本地转写作为兜底，所有结果落到本地 workspace，并生成可搜索的 HTML dashboard。用户也可以把最终报告同步到 Notion 或 Obsidian。
+
+### 实际 Notion 示例
+
+[查看公开视频笔记数据库](https://equal-colby-a69.notion.site/edff5673d33e412da6c00721d97cebca?v=39c2cd5ac3058131b4cf000c0b03307d)，其中包含 YouTube 与 Bilibili 视频、不同转写来源、中文摘要、关键观点和完整原文转写。点击下方截图可直接打开示例数据库。
+
+[![video-to-notes 公开 Notion 示例数据库](docs/assets/notion-public-demo.png)](https://equal-colby-a69.notion.site/edff5673d33e412da6c00721d97cebca?v=39c2cd5ac3058131b4cf000c0b03307d)
 
 ### 复制给 Codex 或 Claude Code 的一行配置指令
 
