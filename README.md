@@ -4,6 +4,8 @@ Caption first. Local Whisper when needed. Searchable local reports. Optional Not
 
 `video-to-notes` turns YouTube, Bilibili, TED, and other `yt-dlp` supported video URLs into local transcripts, grounded summaries, browser-readable HTML reports, and optional Notion or Obsidian knowledge-base entries.
 
+**实际 Notion 示例 / Live Notion demo:** [查看公开视频笔记数据库](https://equal-colby-a69.notion.site/edff5673d33e412da6c00721d97cebca?v=39c2cd5ac3058131b4cf000c0b03307d)
+
 - [中文说明](#中文说明)
 - [English](#english)
 
