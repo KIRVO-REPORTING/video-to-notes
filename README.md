@@ -1,11 +1,12 @@
-# video-to-notes
+# video-to-notes — Turn YouTube and Bilibili videos into timestamped notes
 
-Caption first. Local Whisper when needed. Searchable local reports. Optional Notion or Obsidian publishing.
+An open-source, local-first CLI and Codex skill that converts YouTube, Bilibili, TED, and other `yt-dlp`-supported video links into transcripts, grounded AI summaries, searchable HTML reports, and optional Notion or Obsidian knowledge-base entries.
 
-`video-to-notes` turns YouTube, Bilibili, TED, and other `yt-dlp` supported video URLs into local transcripts, grounded summaries, browser-readable HTML reports, and optional Notion or Obsidian knowledge-base entries.
+Caption first. Local Whisper when needed. Clickable timestamps back to the source. Your workspace remains the source of truth.
 
+- [Product website and video demos](https://kirvo-reporting.github.io/video-to-notes/)
 - [中文说明](#中文说明)
-- [English](#english)
+- [English documentation](#english)
 
 ## 中文说明
 
@@ -16,7 +17,7 @@ Caption first. Local Whisper when needed. Searchable local reports. Optional Not
 https://github.com/user-attachments/assets/3605df08-c558-4060-ae46-48d93420736c
 
 <p align="center">
-  <a href="https://kirvo-reporting.github.io/video-to-notes/#zh">GitHub Pages 播放页</a>
+  <a href="https://kirvo-reporting.github.io/video-to-notes/#zh">项目主页与中文视频</a>
   ·
   <a href="https://raw.githubusercontent.com/KIRVO-REPORTING/video-to-notes/main/docs/assets/video-to-notes-intro-zh.mp4">直接下载 MP4</a>
 </p>
@@ -311,7 +312,7 @@ video-to-notes process "https://www.ted.com/talks/sir_ken_robinson_do_schools_ki
 https://github.com/user-attachments/assets/b592828d-c849-46c8-9704-c2b9e52dc43c
 
 <p align="center">
-  <a href="https://kirvo-reporting.github.io/video-to-notes/#en">GitHub Pages player</a>
+  <a href="https://kirvo-reporting.github.io/video-to-notes/#en">Product website and English video</a>
   ·
   <a href="https://raw.githubusercontent.com/KIRVO-REPORTING/video-to-notes/main/docs/assets/video-to-notes-intro-en.mp4">Download MP4</a>
 </p>
