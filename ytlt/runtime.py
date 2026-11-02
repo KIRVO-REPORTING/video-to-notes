@@ -5,8 +5,12 @@ import importlib.util
 import os
 import re
 import shutil
+import socket
+import ssl
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -17,6 +21,58 @@ from .ffmpeg import resolve_ffmpeg_path
 
 
 MINIMUM_PYTHON = (3, 10)
+
+
+class SourceAcquisitionError(RuntimeError):
+    def __init__(self, stage: str, category: str, host: str, message: str):
+        super().__init__(message)
+        self.stage = stage
+        self.category = category
+        self.host = host
+
+
+def acquisition_error(exc: Exception, *, stage: str, url: str) -> SourceAcquisitionError:
+    """Classify failures without mistaking a network failure for absent captions."""
+    detail = str(exc).lower()
+    reason = getattr(exc, "reason", exc)
+    host = urlparse(url).hostname or "unknown host"
+    if isinstance(reason, socket.gaierror) or any(
+        phrase in detail for phrase in ("failed to resolve", "name or service not known", "nodename nor servname", "getaddrinfo failed", "temporary failure in name resolution")
+    ):
+        category = "dns"
+        message = f"Cannot resolve {host} from this execution environment. Check network access and DNS before retrying; cookies and Whisper settings cannot fix this failure."
+    elif isinstance(reason, (TimeoutError, socket.timeout)) or "timed out" in detail:
+        category = "timeout"
+        message = f"Connection to {host} timed out. Check network access before retrying."
+    elif isinstance(reason, ssl.SSLError) or "certificate_verify_failed" in detail:
+        category = "tls"
+        message = f"TLS verification failed for {host}. Check the network and certificate configuration; do not disable certificate verification."
+    elif any(phrase in detail for phrase in ("sign in", "login required", "authentication required", "cookies are required")):
+        category = "authentication"
+        message = f"{host} requires authentication. Retry using an authorized browser cookie source."
+    else:
+        category = "source"
+        message = str(exc)
+    return SourceAcquisitionError(stage, category, host, message)
+
+
+def check_source_network(url: str, *, timeout: float = 8) -> dict[str, Any]:
+    """Check HTTPS transport; an HTTP rejection still proves the host is reachable."""
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+        return {"checked": True, "reachable": False, "category": "invalid_url", "message": "Expected an HTTP(S) source URL."}
+    target = parsed._replace(netloc=parsed.netloc.rsplit("@", 1)[-1], query="", fragment="").geturl()
+    try:
+        request = urllib.request.Request(target, method="HEAD", headers={"User-Agent": "video-to-notes/0.2"})
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            status = response.status
+    except urllib.error.HTTPError as exc:
+        status = exc.code
+        exc.close()
+    except (OSError, urllib.error.URLError) as exc:
+        error = acquisition_error(exc, stage="network_check", url=url)
+        return {"checked": True, "host": parsed.hostname, "reachable": False, "category": error.category, "message": str(error)}
+    return {"checked": True, "host": parsed.hostname, "reachable": True, "http_status": status}
 
 
 @dataclass(frozen=True)
@@ -137,7 +193,7 @@ def _package_version(name: str) -> str | None:
         return None
 
 
-def doctor(workspace: Path, *, check_config: bool = True) -> dict[str, Any]:
+def doctor(workspace: Path, *, check_config: bool = True, source_url: str | None = None) -> dict[str, Any]:
     errors: list[str] = []
     warnings: list[str] = []
     runtimes = detect_javascript_runtimes()
@@ -174,6 +230,14 @@ def doctor(workspace: Path, *, check_config: bool = True) -> dict[str, Any]:
                 if not model_path or not Path(str(model_path)).expanduser().exists():
                     errors.append("Configured Whisper model cache is missing; rerun configure with --execute.")
 
+    network = check_source_network(source_url) if source_url else {"checked": False}
+    if not network["checked"]:
+        warnings.append("Network access was not checked; pass --url VIDEO_URL before processing a remote source.")
+    elif not network["reachable"]:
+        errors.append(network["message"])
+    elif network["http_status"] >= 400:
+        warnings.append(f"Source host is reachable but returned HTTP {network['http_status']}; metadata and media access are not yet verified.")
+
     return {
         "ready": not errors,
         "python": ".".join(map(str, sys.version_info[:3])),
@@ -184,6 +248,7 @@ def doctor(workspace: Path, *, check_config: bool = True) -> dict[str, Any]:
         "workspace": str(workspace),
         "configured": read_config(workspace) is not None,
         "config_checked": check_config,
+        "network": network,
         "errors": errors,
         "warnings": warnings,
     }

@@ -63,3 +63,5 @@ After finalization, the folder should contain:
 Valid `transcript_source` values are `manual_subtitle`, `auto_subtitle`, and `local_whisper`.
 
 Run `video-to-notes finalize "VIDEO_FOLDER"` only after `summary.md` and `tags.json` are ready. Finalization re-renders the report, refreshes the dashboard, and deletes retained downloaded media.
+
+Finalization and CLI publication reject an unsupported transcript source, an absent or blank transcript, a missing summary, or malformed/missing tags. These checks establish that required artifacts exist; they cannot prove that arbitrary text is an authentic transcript. Read the full acquired transcript and its provenance before summarizing. Preserve downloaded media when validation fails so the acquisition can be recovered.

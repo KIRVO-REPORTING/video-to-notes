@@ -13,6 +13,39 @@ MEDIA_EXTENSIONS = {".mp4", ".mkv", ".webm", ".mov", ".m4v", ".mp3", ".wav", ".m
 SUMMARY_FILENAME = "summary.md"
 LEGACY_SUMMARY_FILENAME = "summary.txt"
 TAGS_FILENAME = "tags.json"
+VALID_TRANSCRIPT_SOURCES = {"manual_subtitle", "auto_subtitle", "local_whisper"}
+
+
+class ReportValidationError(ValueError):
+    pass
+
+
+def validate_transcript(folder: Path, metadata: dict[str, Any]) -> None:
+    """Validate acquisition artifacts before any media cleanup."""
+    if not isinstance(metadata, dict) or metadata.get("transcript_source") not in VALID_TRANSCRIPT_SOURCES:
+        raise ReportValidationError("A completed caption or local Whisper transcript is required; an article summary or source notice is not a video transcript.")
+    transcript = folder / "transcript.txt"
+    if not transcript.is_file() or not transcript.read_text(encoding="utf-8-sig").strip():
+        raise ReportValidationError("Missing or empty transcript.txt. Acquire the actual transcript before finalizing.")
+
+
+def validate_report_inputs(folder: Path, metadata: dict[str, Any]) -> None:
+    """Reject incomplete acquisitions before rendering, deleting media, or publishing."""
+    validate_transcript(folder, metadata)
+    summary = summary_file_path(folder)
+    if not summary.is_file() or not summary.read_text(encoding="utf-8-sig").strip():
+        raise ReportValidationError("Missing or empty summary.md.")
+    tags_path = folder / TAGS_FILENAME
+    try:
+        tags = json.loads(tags_path.read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError) as exc:
+        raise ReportValidationError("Missing or invalid tags.json; use {\"tags\": []} when no subject tags are supported.") from exc
+    if not isinstance(tags, dict) or not isinstance(tags.get("tags"), list) or any(
+        not isinstance(tag, str) or not tag.strip() for tag in tags["tags"]
+    ):
+        raise ReportValidationError("tags.json must contain a tags array of non-empty strings.")
+
+
 NON_CONTENT_TAGS = {
     "video-report",
     "video-to-notes",
