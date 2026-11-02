@@ -32,10 +32,15 @@ If the command is already installed, run:
 
 ```bash
 video-to-notes doctor
+video-to-notes doctor --url "VIDEO_URL"
 video-to-notes probe
 ```
 
 Resolve every `doctor` error before claiming the installation is ready. Do not treat warnings as fatal unless they affect the current source or configured backend.
+
+`doctor` without `--url` checks local dependencies only and reports `network.checked=false`. With `--url`, it checks transport from the actual CLI process. An HTTP rejection proves the host is reachable, but does not prove that yt-dlp can retrieve captions or media.
+
+If the CLI reports a DNS or network failure, identify whether this execution environment permits outbound access. Browser access can work while a sandboxed CLI cannot connect. Retry only through an available, authorized download path; do not bypass sandbox restrictions. Authentication retries and model installation do not fix DNS failure. If no permitted path exists, report the acquisition stage and blocker, and leave the transcription incomplete.
 
 ## Configure
 

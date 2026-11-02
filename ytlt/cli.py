@@ -29,6 +29,7 @@ from .ffmpeg import resolve_ffmpeg_path
 from .notion import NotionError, NotionPublishConfig, publish_report_to_notion
 from .obsidian import ObsidianError, ObsidianPublishConfig, publish_report_to_obsidian, sync_workspace_to_obsidian
 from .reporting import (
+    ReportValidationError,
     SUMMARY_FILENAME,
     delete_video_files,
     make_video_folder,
@@ -36,9 +37,11 @@ from .reporting import (
     read_metadata,
     rebuild_index,
     summary_file_path,
+    validate_report_inputs,
+    validate_transcript,
     write_report,
 )
-from .runtime import doctor, youtube_ydl_options
+from .runtime import SourceAcquisitionError, acquisition_error, doctor, youtube_ydl_options
 from .spec import InstallProfile, MODEL_MATRIX, default_workspace, install_commands, probe, recommend, should_cache_model, to_json
 from .transcribe import download_model, transcribe_video
 
@@ -185,6 +188,7 @@ def _workspace_for_folder(folder: Path) -> Path:
 
 
 def _publish_folder_to_notion(folder: Path, workspace: Path, args: argparse.Namespace) -> dict[str, Any]:
+    validate_report_inputs(folder, read_metadata(folder))
     try:
         return publish_report_to_notion(folder, _notion_config(args), workspace=workspace)
     except NotionError as exc:
@@ -192,6 +196,7 @@ def _publish_folder_to_notion(folder: Path, workspace: Path, args: argparse.Name
 
 
 def _publish_folder_to_obsidian(folder: Path, workspace: Path, args: argparse.Namespace) -> dict[str, Any]:
+    validate_report_inputs(folder, read_metadata(folder))
     try:
         return publish_report_to_obsidian(folder, _obsidian_config(args), workspace=workspace)
     except ObsidianError as exc:
@@ -266,11 +271,14 @@ def process_url(args: argparse.Namespace) -> int:
     output_root.mkdir(parents=True, exist_ok=True)
     language = args.language or configured_language(workspace)
 
-    info = extract_info(
-        args.url,
-        cookies_from_browser=args.cookies_from_browser,
-        cookies=args.cookies.expanduser().resolve() if args.cookies else None,
-    )
+    try:
+        info = extract_info(
+            args.url,
+            cookies_from_browser=args.cookies_from_browser,
+            cookies=args.cookies.expanduser().resolve() if args.cookies else None,
+        )
+    except Exception as exc:
+        raise acquisition_error(exc, stage="metadata", url=args.url) from exc
     track = None if args.force_transcribe else choose_caption_track(info, language, allow_auto=not args.no_auto_subs)
     if not track and args.no_transcribe_fallback and not args.force_transcribe:
         raise SystemExit("No usable captions found and --no-transcribe-fallback was set.")
@@ -297,7 +305,7 @@ def process_url(args: argparse.Namespace) -> int:
             metadata["caption_ext"] = track.ext
         except Exception as exc:
             if args.no_transcribe_fallback:
-                raise
+                raise acquisition_error(exc, stage="captions", url=args.url) from exc
             print(f"Caption path failed, falling back to local transcription: {exc}", file=sys.stderr)
             transcript_source = "local_whisper"
             metadata = normalize_metadata(info, args.url, transcript_source=transcript_source)
@@ -306,14 +314,17 @@ def process_url(args: argparse.Namespace) -> int:
         configured_model = configured_model_path(workspace, profile)
         model_override = args.model or configured_model
         ffmpeg_path = resolve_ffmpeg_path(workspace)
-        video_path = download_video(
-            args.url,
-            folder,
-            cookies_from_browser=args.cookies_from_browser,
-            cookies=args.cookies.expanduser().resolve() if args.cookies else None,
-            referer=args.referer,
-            ffmpeg_location=ffmpeg_path,
-        )
+        try:
+            video_path = download_video(
+                args.url,
+                folder,
+                cookies_from_browser=args.cookies_from_browser,
+                cookies=args.cookies.expanduser().resolve() if args.cookies else None,
+                referer=args.referer,
+                ffmpeg_location=ffmpeg_path,
+            )
+        except Exception as exc:
+            raise acquisition_error(exc, stage="media_download", url=args.url) from exc
         transcript_path = transcribe_video(
             video_path,
             folder,
@@ -335,6 +346,7 @@ def process_url(args: argparse.Namespace) -> int:
         metadata["compute_type"] = args.compute_type or profile.compute_type
         metadata["ffmpeg"] = ffmpeg_path
 
+    validate_transcript(folder, metadata)
     metadata["transcript_file"] = transcript_path.name
     metadata["processing_seconds"] = round(time.perf_counter() - processing_started, 3)
     metadata_path = folder / "metadata.json"
@@ -380,6 +392,7 @@ def finalize(args: argparse.Namespace) -> int:
     active_summary = summary_file_path(folder)
     if not active_summary.exists() or active_summary.stat().st_size == 0:
         raise SystemExit(f"Missing or empty {SUMMARY_FILENAME} in {folder}")
+    validate_report_inputs(folder, metadata)
     report_path = write_report(folder, metadata)
     deleted = delete_video_files(folder, metadata)
     workspace = _workspace_for_folder(folder)
@@ -569,7 +582,7 @@ def run_probe(args: argparse.Namespace) -> int:
 
 
 def run_doctor(args: argparse.Namespace) -> int:
-    payload = doctor(_workspace(args.workspace), check_config=not args.base_only)
+    payload = doctor(_workspace(args.workspace), check_config=not args.base_only, source_url=getattr(args, "url", None))
     print(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", end="")
     return 0 if payload["ready"] else 2
 
@@ -682,6 +695,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     doctor_parser = sub.add_parser("doctor", help="Validate the base runtime and configured Whisper fallback.")
     doctor_parser.add_argument("--workspace")
+    doctor_parser.add_argument("--url", help="Check network access from this process to the source host.")
     doctor_parser.add_argument("--base-only", action="store_true", help="Skip configured Whisper validation.")
     doctor_parser.set_defaults(func=run_doctor)
 
@@ -789,4 +803,11 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    return args.func(args)
+    try:
+        return args.func(args)
+    except SourceAcquisitionError as exc:
+        print(json.dumps({"status": "failed", "stage": exc.stage, "category": exc.category, "host": exc.host, "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
+        return 2
+    except ReportValidationError as exc:
+        print(json.dumps({"status": "failed", "stage": "report_validation", "message": str(exc)}, ensure_ascii=False), file=sys.stderr)
+        return 2

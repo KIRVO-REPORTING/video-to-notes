@@ -18,7 +18,7 @@ Turn a supported video URL into a transcript-backed report. Prefer downloadable 
 
 ## Bare URL workflow
 
-1. Run `video-to-notes doctor` and use the workspace path it returns. Do not assume the current repository or shell directory is the video workspace. If the command is missing or doctor fails, follow [references/setup.md](references/setup.md).
+1. Run `video-to-notes doctor --url "VIDEO_URL"` and use the workspace path it returns. A dependency-only `ready` result does not verify network access. Do not assume the current repository or shell directory is the video workspace. If the command is missing or doctor fails, follow [references/setup.md](references/setup.md).
 2. Process into local artifacts first, regardless of the configured publishing target:
 
    ```bash
@@ -49,6 +49,8 @@ An explicit user destination overrides configuration for that run. If remote pub
 
 ## Failure handling
 
+- A DNS, connection, or TLS failure is an acquisition failure, not evidence of absent captions. Follow [references/setup.md](references/setup.md) to diagnose it before changing cookies or Whisper settings. Respect the execution environment's network permissions; the skill cannot grant network access.
+- If acquisition fails, do not fabricate metadata or put an article, summary, or source notice in `transcript.txt` to make finalization succeed. An author-published article may support a separately labeled article summary; it does not complete video transcription.
 - If metadata extraction or captions fail because authentication is required, retry with available browser cookies. Ask the user only if no authorized cookie source is available.
 - If captions are absent and Whisper is not configured, run `video-to-notes doctor`, then follow [references/setup.md](references/setup.md). Read [references/model-selection.md](references/model-selection.md) only when choosing or troubleshooting a backend/model. Do not ask what the link is for.
 - If the source is private, deleted, region-restricted, or unsupported, report that specific reason and preserve any artifacts already created.
